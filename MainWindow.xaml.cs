@@ -35,43 +35,44 @@ namespace ISA
             bLineEdit.Text = "3";            
             dComboBox.SelectedIndex = 2;     
             NLineEdit.Text = "10";
+            PkLineEdit.Text = "0.75";
+            PmLineEdit.Text = "0.002";
 
             aLineEdit.TextChanged += ValidateInputs;
             bLineEdit.TextChanged += ValidateInputs;
             NLineEdit.TextChanged += ValidateInputs;
             dComboBox.SelectionChanged += ValidateInputs;
+            PkLineEdit.TextChanged += ValidateInputs;
+            PmLineEdit.TextChanged += ValidateInputs;
         }
         private void ValidateInputs(object sender, EventArgs e)
         {
-            bool isValid = ValidateInput(aLineEdit.Text) &&
-                           ValidateInput(bLineEdit.Text) &&
-                           ValidateInput(NLineEdit.Text) &&
+            bool isValid = TryParseDouble(aLineEdit.Text, out double a) &&
+                           TryParseDouble(bLineEdit.Text, out double b) && a < b &&
+                           int.TryParse(NLineEdit.Text, out int n) && n >= 0 &&
+                           TryParseDouble(PkLineEdit.Text, out double pk) && pk >= 0 && pk <= 1 &&
+                           TryParseDouble(PmLineEdit.Text, out double pm) && pm >= 0 && pm <= 1 &&
                            dComboBox.SelectedItem != null;
-            if (isValid)
-            {
-                double a = double.Parse(aLineEdit.Text);
-                double b = double.Parse(bLineEdit.Text);
-                if (a >= b) isValid = false;
-            }
 
             startButton.IsEnabled = isValid;
         }
 
-        private bool ValidateInput(string input)
+        private bool TryParseDouble(string input, out double n)
         {
-            return double.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out _);
+            return double.TryParse(input.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out n);
         }
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
-            double a = double.Parse(aLineEdit.Text);
-            double b = double.Parse(bLineEdit.Text);
+            TryParseDouble(aLineEdit.Text, out double a);
+            TryParseDouble(bLineEdit.Text, out double b);
             double d = (double)dComboBox.SelectedItem;
             int N = int.Parse(NLineEdit.Text);
             int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
-            int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
+            TryParseDouble(PkLineEdit.Text, out double pk);
+            TryParseDouble(PmLineEdit.Text, out double pm);
             
             createTable();
-            fillTable(a,b,d,N,l,decimalPlaces);
+            fillTable(a,b,d,N,l,pk,pm);
         }
 
         private void createTable()
@@ -80,48 +81,56 @@ namespace ISA
             dataGrid.ItemsSource = null;
 
             dataGrid.Columns.Add(new DataGridTextColumn { Header = "Lp", Binding = new Binding("Lp") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x real", Binding = new Binding("xReal") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "f(x)", Binding = new Binding("fx") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "g(x)", Binding = new Binding("gx") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "p", Binding = new Binding("p") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "q", Binding = new Binding("q") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "r", Binding = new Binding("r") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x real*", Binding = new Binding("xReal1") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x bin*", Binding = new Binding("xBin1") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "rodzice", Binding = new Binding("rodzice") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "pc", Binding = new Binding("pc") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "potomek", Binding = new Binding("potomek") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "pop. po krzyżowaniu", Binding = new Binding("popPostCross") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "punkt mutacji", Binding = new Binding("mutPoint") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "po mutacji", Binding = new Binding("postMutBin") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "po mutacji real", Binding = new Binding("postMutReal") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "f(x) po mut", Binding = new Binding("postMutFx") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x real", Binding = new Binding("XReal") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "f(x)", Binding = new Binding("Fx") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "g(x)", Binding = new Binding("Gx") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "p", Binding = new Binding("P") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "q", Binding = new Binding("Q") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "r", Binding = new Binding("R") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x real*", Binding = new Binding("XCrossReal") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x bin*", Binding = new Binding("XCrossBin") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "rodzice", Binding = new Binding("Parents") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "pc", Binding = new Binding("Pc") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "potomek", Binding = new Binding("Child") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "pop. po krzyżowaniu", Binding = new Binding("PopulationPostCross") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "punkt mutacji", Binding = new Binding("MutPoint") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "po mutacji", Binding = new Binding("PostMutBin") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "po mutacji real", Binding = new Binding("PostMutReal") });
+            dataGrid.Columns.Add(new DataGridTextColumn { Header = "f(x) po mut", Binding = new Binding("PostMutFx") });
         }
-        private void fillTable(double a, double b, double d, int N, int l, int decimalPlaces)
+        private void fillTable(double a, double b, double d, int N, int l, double pk, double pm)
         {
+            int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
             var tableData = new List<TableRow>();
             Random rand = new Random();
 
             fExtreme = functionGoal == FunctionGoal.Max ? double.MinValue : double.MaxValue;
 
-            // pre compute x, f(x), g(x)
+            // pre compute: x, f(x)
             List<double> xs = new List<double>();
             List<double> fs = new List<double>();
-            List<double> gs = new List<double>();
 
             for (int i = 0; i < N; i++)
             {
                 double xReal = a + (b - a) * rand.NextDouble();
                 double fx = F(xReal);
-                double gx = G(xReal, d);
 
                 if (functionGoal == FunctionGoal.Max ? fx > fExtreme : fx < fExtreme) 
                     fExtreme = fx;
 
                 xs.Add(xReal);
                 fs.Add(fx);
-                gs.Add(gx);
+            }
 
+            // g(x)
+            List<double> gs = new List<double>();
+            double gsSum = 0;
+
+            for (int i = 0; i < N; i++)
+            {
+                double gx = G(xs[i], d);
+                gsSum += gx;
+                gs.Add(gx);
             }
 
             // p, q
@@ -131,46 +140,132 @@ namespace ISA
 
             for (int i = 0; i < N; i++)
             {
-                double p = gs[i] / gs.Sum();
+                double p = gs[i] / gsSum;
                 q += p;
                 ps.Add(p);
                 qs.Add(q);
             }
 
-            // filling the table
-            for (int i = 0; i < N; i++) {
-                double xReal = xs[i];
-                double fx = fs[i];
-                double gx = gs[i];
-                double p = ps[i];
+            // selection
+            List<double> rs = new List<double>();
+            List<double> xCrossReals = new List<double>();
+            List<string> xCrossBins = new List<string>();
 
-
+            for (int i = 0; i < N; i++)
+            {
                 double r = rand.NextDouble();
-         
                 int xCrossIndex = GetCDFIndex(r, qs);
                 double xCrossReal = xs[xCrossIndex];
                 string xCrossBin = Real2Bin(xCrossReal, a, b, l);
+                rs.Add(r);
+                xCrossReals.Add(xCrossReal);
+                xCrossBins.Add(xCrossBin);
+            }
 
+            // crossing
+            List<bool> parents = new List<bool>();
+            int numOfParents = 0;
+
+            for (int i = 0; i < N; i++) {
+                bool parent = rand.NextDouble() <= pk;
+                parents.Add(parent);
+                numOfParents++;
+            }
+
+            // a single parent can't have children...
+            if (numOfParents == 1)
+            {
+                // it won't even be a parent
+                for (int i = 0; i < parents.Count; i++)
+                {
+                    parents[i] = false;
+                }
+            }
+
+            // TODO:
+            // - iterate through only parents of the population
+            // - match them into pairs
+            // - if we have odd number of them, last one has to be with the first one
+            // - if a parent has a paramour (only one of the parents of the population
+            //   can have 2 matches) in place of cutting points it must have a list for both of
+            //   its partners
+            List<string?> children = new List<string?>();
+            List<List<int>?> cuttingPoints = new List<List<int>?>(N);
+            string? secondChild = null;
+            int? cuttingPoint = null;
+
+            for (int i = 0; i < N; i++) {
+                string? child = null;
+
+                if (parents[i])
+                {
+                    if (secondChild != null)
+                    {
+                        child = secondChild;
+                        secondChild = null;
+                        // current cutting point will be added later
+                    }
+                    else
+                    {
+                        string R1 = xCrossBins[i];
+
+                        // find a match <3
+                        int R2Index = (i + 1) % N;
+                        while (!parents[R2Index]) { R2Index = (R2Index + 1) % N; }
+
+                        string R2 = Real2Bin(xs[R2Index], a, b, l);
+
+                        // cross chromosomes
+                        cuttingPoint = rand.Next(1, l);
+                        child = R1[..(int)cuttingPoint] + R2[(int)cuttingPoint..];
+                        secondChild = R2[..(int)cuttingPoint] + R1[(int)cuttingPoint..];
+
+                        // if current parent is a paramour of R2
+                        if (R2Index < i)
+                        {
+                            // add the current cutting point to it
+                            cuttingPoints[R2Index].Add((int)cuttingPoint);
+
+                        }
+                        else if (R2Index == i)
+                        {
+                            // self breeding is not allowed!
+                            child = null;
+                        }
+
+                    }
+                    cuttingPoints.Add(new List<int> { (int)cuttingPoint });
+                }
+                else
+                {
+                    cuttingPoints.Add(null);
+                }
+
+                children.Add(child);
+            }
+
+            // filling the table
+            for (int i = 0; i < N; i++) {
 
                 tableData.Add(new TableRow
                 {
                     Lp = i + 1,
-                    XReal = xReal,
-                    Fx = fx,
-                    Gx = gx,
-                    P = p,
-                    Q = q,
-                    R = r,
-                    XCrossReal = xCrossReal,
-                    XCrossBin = xCrossBin,
-                    Rodzice = rodzice,
-                    Pc = pc,
-                    Potomek = potomek,
-                    PopPostCross = popPostCross,
+                    XReal = Math.Round(xs[i], decimalPlaces),
+                    Fx = Math.Round(fs[i], decimalPlaces),
+                    Gx = Math.Round(gs[i], decimalPlaces),
+                    P = Math.Round(ps[i], decimalPlaces),
+                    Q = Math.Round(qs[i], decimalPlaces),
+                    R = Math.Round(rs[i], decimalPlaces),
+                    XCrossReal = Math.Round(xCrossReals[i], decimalPlaces),
+                    XCrossBin = xCrossBins[i],
+                    Parents = parents[i] ? xCrossBins[i] : "-",
+                    Pc = cuttingPoints[i] == null ? "-" : string.Join(',', cuttingPoints[i]),
+                    Child = children[i],
+                    /*PopulationPostCross = popPostCross,
                     MutPoint = mutPoint,
                     PostMutBin = postMutBin,
                     PostMutReal = postMutReal,
-                    PostMutFx = postMutFx,
+                    PostMutFx = postMutFx,*/
                 });
             }
 
@@ -224,15 +319,15 @@ namespace ISA
 
             return low;
         }
-        private double F(double x)
+        private static double F(double x)
         {
             return - (x + 1) * (x - 1) * (x - 2);
         }
-        private double Gmax(double x, double fMin, double d)
+        private static double Gmax(double x, double fMin, double d)
         {
             return F(x) - fMin + d;
         }
-        private double Gmin(double x, double fMax, double d)
+        private static double Gmin(double x, double fMax, double d)
         {
             return -(F(x) - fMax) + d;
         }
@@ -254,10 +349,10 @@ namespace ISA
         public double R { get; set; }
         public double XCrossReal { get; set; }
         public string? XCrossBin { get; set; }
-        public string? Rodzice { get; set; }
-        public int Pc { get; set; }
-        public string? Potomek { get; set; }
-        public string? PopPostCross { get; set; }
+        public string? Parents { get; set; }
+        public string Pc { get; set; }
+        public string? Child { get; set; }
+        public string? PopulationPostCross { get; set; }
         public string? MutPoint { get; set; }
         public string? PostMutBin { get; set; }
         public string? PostMutReal { get; set; }
