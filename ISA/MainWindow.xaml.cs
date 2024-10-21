@@ -149,7 +149,7 @@ namespace ISA
                 qs.Add(q);
             }
 
-            // selection
+            // SELECTION
             List<double> rs = new List<double>();
             List<double> xCrossReals = new List<double>();
             List<string> xCrossBins = new List<string>();
@@ -165,7 +165,7 @@ namespace ISA
                 xCrossBins.Add(xCrossBin);
             }
 
-            // CROSSING
+            // CROSSOVER
             // find number of parents
             List<bool> parents = new List<bool>();
             int numOfParents = 0;
@@ -185,14 +185,8 @@ namespace ISA
                     parents[i] = false;
                 }
             }
-
-            // TODO:
-            // - iterate through only parents of the population
-            // - match them into pairs
-            // - if we have odd number of them, last one has to be with the first one
-            // - if a parent has a paramour (only one of the parents of the population
-            //   can have 2 matches) in place of cutting points it must have a list for both of
-            //   its partners
+            
+            // find a match and cross chromosomes
             List<string?> children = new List<string?>();
             List<List<int>?> cuttingPoints = new List<List<int>?>(N);
             string? secondChild = null;
@@ -247,6 +241,14 @@ namespace ISA
                 children.Add(child);
             }
 
+            List<string> popPostCross = new List<string>();
+            for (int i = 0; i < N; i++)
+            {
+                // parents die and children end up in their place
+                if (parents[i]) popPostCross.Add(children[i]);
+                else popPostCross.Add(xCrossBins[i]);
+            }
+
             // filling the table
             bool evenParent = true;
             int foundParents = 0;
@@ -299,9 +301,8 @@ namespace ISA
                     ChildSecondPart = childSecondPart,
                     ChildFirstColor = childFirstColor,
                     ChildSecondColor = childSecondColor,
-                    //Child = children[i],
-                    /*PopulationPostCross = popPostCross,
-                    MutPoint = mutPoint,
+                    PopulationPostCross = popPostCross[i],
+                    /*MutPoint = mutPoint,
                     PostMutBin = postMutBin,
                     PostMutReal = postMutReal,
                     PostMutFx = postMutFx,*/
