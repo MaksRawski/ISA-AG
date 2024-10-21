@@ -26,7 +26,46 @@
                       HorizontalScrollBarVisibility="Auto"
                       CanUserAddRows="False"
                       IsReadOnly="True"
-                      Margin="10"/>
+                      Margin="10">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Lp" Binding="{Binding Lp}" />
+                    <DataGridTextColumn Header="x real" Binding="{Binding XReal}" />
+                    <DataGridTextColumn Header="f(x)" Binding="{Binding Fx}" />
+                    <DataGridTextColumn Header="g(x)" Binding="{Binding Gx}" />
+                    <DataGridTextColumn Header="p" Binding="{Binding P}" />
+                    <DataGridTextColumn Header="q" Binding="{Binding Q}" />
+                    <DataGridTextColumn Header="r" Binding="{Binding R}" />
+                    <DataGridTextColumn Header="x real*" Binding="{Binding XCrossReal}" />
+                    <DataGridTextColumn Header="x bin*" Binding="{Binding XCrossBin}" />
+                    <DataGridTemplateColumn Header="rodzice">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <Run Text="{Binding ParentFirstPart}" Foreground="{Binding ParentColor}" />    
+                                    <Run Text="{Binding ParentSecondPart}" Foreground="{Binding ParentColor}" />    
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="pc" Binding="{Binding Pc}" />
+                    <DataGridTemplateColumn Header="potomek">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <Run Text="{Binding ChildFirstPart}" Foreground="{Binding ChildFirstColor}" />
+                                    <Run Text="{Binding ChildSecondPart}" Foreground="{Binding ChildSecondColor}" />
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="pop. po krzyżowaniu" Binding="{Binding PopulationPostCross}" />
+                    <DataGridTextColumn Header="punkt mutacji" Binding="{Binding MutPoint}" />
+                    <DataGridTextColumn Header="po mutacji" Binding="{Binding PostMutBin}" />
+                    <DataGridTextColumn Header="po mutacji real" Binding="{Binding PostMutReal}" />
+                    <DataGridTextColumn Header="f(x) po mut" Binding="{Binding PostMutFx}" />
+
+                </DataGrid.Columns>
+            </DataGrid>
         </StackPanel>
     </Grid>
 </Window>

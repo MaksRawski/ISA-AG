@@ -71,33 +71,36 @@ namespace ISA
             TryParseDouble(PkLineEdit.Text, out double pk);
             TryParseDouble(PmLineEdit.Text, out double pm);
             
-            createTable();
+            //createTable();
             fillTable(a,b,d,N,l,pk,pm);
         }
 
-        private void createTable()
-        {
-            dataGrid.Columns.Clear();
-            dataGrid.ItemsSource = null;
+        //private void createTable()
+        //{
+        //    dataGrid.Columns.Clear();
+        //    dataGrid.ItemsSource = null;
 
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "Lp", Binding = new Binding("Lp") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x real", Binding = new Binding("XReal") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "f(x)", Binding = new Binding("Fx") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "g(x)", Binding = new Binding("Gx") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "p", Binding = new Binding("P") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "q", Binding = new Binding("Q") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "r", Binding = new Binding("R") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x real*", Binding = new Binding("XCrossReal") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "x bin*", Binding = new Binding("XCrossBin") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "rodzice", Binding = new Binding("Parents") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "pc", Binding = new Binding("Pc") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "potomek", Binding = new Binding("Child") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "pop. po krzyżowaniu", Binding = new Binding("PopulationPostCross") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "punkt mutacji", Binding = new Binding("MutPoint") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "po mutacji", Binding = new Binding("PostMutBin") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "po mutacji real", Binding = new Binding("PostMutReal") });
-            dataGrid.Columns.Add(new DataGridTextColumn { Header = "f(x) po mut", Binding = new Binding("PostMutFx") });
-        }
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "Lp", Binding = new Binding("Lp") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "x real", Binding = new Binding("XReal") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "f(x)", Binding = new Binding("Fx") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "g(x)", Binding = new Binding("Gx") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "p", Binding = new Binding("P") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "q", Binding = new Binding("Q") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "r", Binding = new Binding("R") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "x real*", Binding = new Binding("XCrossReal") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "x bin*", Binding = new Binding("XCrossBin") });
+        //    //dataGrid.Columns.Add(new DataGridTextColumn { Header = "rodzice", Binding = new Binding("Parents") });
+        //    AddColoredColumn("rodzice", "ParentsRed", "ParentsBlue");
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "pc", Binding = new Binding("Pc") });
+        //    //dataGrid.Columns.Add(new DataGridTextColumn { Header = "potomek", Binding = new Binding("Child") });
+        //    AddColoredColumn("potomek", "ChildRed", "ChildBlue");
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "pop. po krzyżowaniu", Binding = new Binding("PopulationPostCross") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "punkt mutacji", Binding = new Binding("MutPoint") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "po mutacji", Binding = new Binding("PostMutBin") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "po mutacji real", Binding = new Binding("PostMutReal") });
+        //    dataGrid.Columns.Add(new DataGridTextColumn { Header = "f(x) po mut", Binding = new Binding("PostMutFx") });
+        //}
+        
         private void fillTable(double a, double b, double d, int N, int l, double pk, double pm)
         {
             int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
@@ -162,14 +165,15 @@ namespace ISA
                 xCrossBins.Add(xCrossBin);
             }
 
-            // crossing
+            // CROSSING
+            // find number of parents
             List<bool> parents = new List<bool>();
             int numOfParents = 0;
 
             for (int i = 0; i < N; i++) {
                 bool parent = rand.NextDouble() <= pk;
                 parents.Add(parent);
-                numOfParents++;
+                if (parent) numOfParents++;
             }
 
             // a single parent can't have children...
@@ -213,7 +217,7 @@ namespace ISA
                         int R2Index = (i + 1) % N;
                         while (!parents[R2Index]) { R2Index = (R2Index + 1) % N; }
 
-                        string R2 = Real2Bin(xs[R2Index], a, b, l);
+                        string R2 = xCrossBins[R2Index];
 
                         // cross chromosomes
                         cuttingPoint = rand.Next(1, l);
@@ -225,7 +229,6 @@ namespace ISA
                         {
                             // add the current cutting point to it
                             cuttingPoints[R2Index].Add((int)cuttingPoint);
-
                         }
                         else if (R2Index == i)
                         {
@@ -245,7 +248,37 @@ namespace ISA
             }
 
             // filling the table
+            bool evenParent = true;
+            int foundParents = 0;
             for (int i = 0; i < N; i++) {
+                string parentFirstPart = "-";
+                string parentSecondPart = "";
+                string childFirstPart = "-";
+                string childSecondPart = "";
+                string childFirstColor = "Black";
+                string childSecondColor = "Black";
+                string parentColor = "Black";
+
+                if (parents[i])
+                {
+                    evenParent = !evenParent;
+                    foundParents++;
+
+                    parentFirstPart = xCrossBins[i][..cuttingPoints[i][0]];
+                    parentSecondPart = xCrossBins[i][cuttingPoints[i][0]..];
+                    parentColor = !evenParent ? "Red" : "Blue";
+                    childFirstPart = children[i][..cuttingPoints[i][0]];
+                    childSecondPart = children[i][cuttingPoints[i][0]..];
+                    childFirstColor = !evenParent ? "Red" : "Blue";
+                    childSecondColor = evenParent ? "Red" : "Blue";
+
+                    if (!evenParent && foundParents == numOfParents)
+                    {
+                        parentColor = "Black";
+                        childFirstColor = "Black";
+                        childSecondColor = "Black";
+                    }
+                }
 
                 tableData.Add(new TableRow
                 {
@@ -258,9 +291,15 @@ namespace ISA
                     R = Math.Round(rs[i], decimalPlaces),
                     XCrossReal = Math.Round(xCrossReals[i], decimalPlaces),
                     XCrossBin = xCrossBins[i],
-                    Parents = parents[i] ? xCrossBins[i] : "-",
+                    ParentFirstPart = parentFirstPart,
+                    ParentSecondPart = parentSecondPart,
+                    ParentColor = parentColor,
                     Pc = cuttingPoints[i] == null ? "-" : string.Join(',', cuttingPoints[i]),
-                    Child = children[i],
+                    ChildFirstPart = childFirstPart,
+                    ChildSecondPart = childSecondPart,
+                    ChildFirstColor = childFirstColor,
+                    ChildSecondColor = childSecondColor,
+                    //Child = children[i],
                     /*PopulationPostCross = popPostCross,
                     MutPoint = mutPoint,
                     PostMutBin = postMutBin,
@@ -349,9 +388,14 @@ namespace ISA
         public double R { get; set; }
         public double XCrossReal { get; set; }
         public string? XCrossBin { get; set; }
-        public string? Parents { get; set; }
-        public string Pc { get; set; }
-        public string? Child { get; set; }
+        public string? ParentFirstPart { get; set; }
+        public string? ParentSecondPart { get; set; }
+        public string? ParentColor { get; set; }
+        public string? Pc { get; set; }
+        public string? ChildFirstPart { get; set; }
+        public string? ChildSecondPart { get; set; }
+        public string? ChildFirstColor { get; set; }
+        public string? ChildSecondColor { get; set; }
         public string? PopulationPostCross { get; set; }
         public string? MutPoint { get; set; }
         public string? PostMutBin { get; set; }
