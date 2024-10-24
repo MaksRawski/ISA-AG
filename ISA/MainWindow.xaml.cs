@@ -24,6 +24,7 @@ namespace ISA
             functionGoalComboBox.Items.Add("MAX");
             functionGoalComboBox.Items.Add("MIN");
 
+            fLineEdit.Text = "-(x+1)*(x-1)*(x-2)";
             aLineEdit.Text = "-2";
             bLineEdit.Text = "3";
             dComboBox.SelectedIndex = 2;
@@ -65,6 +66,8 @@ namespace ISA
             _ = TryParseDouble(PmLineEdit.Text, out double pm);
             FunctionGoal functionGoal = 
                 functionGoalComboBox.SelectedIndex == 0 ? FunctionGoal.Max : FunctionGoal.Min;
+            //var f = (double x) => -(x + 1) * (x - 1) * (x - 2);
+            Func<double, double> f = Utils.ParseFunction(fLineEdit.Text);
 
             var userInputs = new UserInputs
             {
@@ -76,7 +79,7 @@ namespace ISA
                 N = N,
                 l = l,
                 functionGoal = functionGoal,
-                f = (double x) => -(x + 1) * (x - 1) * (x - 2),
+                f = f,
             };
             var algo = new Algorithm();
             algo.FillTable(userInputs, dataGrid);
