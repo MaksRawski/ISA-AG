@@ -33,7 +33,7 @@ internal class Algorithm
 
     Random rand = new();
     
-    public void FillTable(UserInputs userInputs, ref DataGrid dataGrid)
+    public void FillTable(in UserInputs userInputs, DataGrid dataGrid)
     {
         int decimalPlaces = (int)Math.Ceiling(-Math.Log10(userInputs.d));
         var tableData = new List<TableRow>();
@@ -116,7 +116,7 @@ internal class Algorithm
         double rowHeight = 22;
         dataGrid.MaxHeight = rowHeight * 20;
     }
-    private Population GeneratePopulation(UserInputs userInputs, out double fExtreme)
+    private Population GeneratePopulation(in UserInputs userInputs, out double fExtreme)
     {
         fExtreme = userInputs.functionGoal == FunctionGoal.Max ? double.MaxValue : double.MinValue;
         List<double> xs = new();
@@ -143,7 +143,7 @@ internal class Algorithm
         };
     }
     
-    private SelectionResults Select(UserInputs userInputs, List<double> xs, double fExtreme)
+    private SelectionResults Select(in UserInputs userInputs, List<double> xs, double fExtreme)
     {
         List<double> gs = new();
         double gsSum = 0;
@@ -175,7 +175,7 @@ internal class Algorithm
         for (int i = 0; i < userInputs.N; i++)
         {
             double r = rand.NextDouble();
-            int xCrossIndex = GetCDFIndex(r, qs);
+            int xCrossIndex = Utils.GetCDFIndex(r, qs);
             double xPreCrossReal = xs[xCrossIndex];
             string xPreCrossBin = Utils.Real2Bin(xPreCrossReal, userInputs.a, userInputs.b, userInputs.l);
             rs.Add(r);
@@ -194,7 +194,7 @@ internal class Algorithm
         };
     }
 
-    private CrossoverResults Crossover(UserInputs userInputs, SelectionResults select)
+    private CrossoverResults Crossover(in UserInputs userInputs, in SelectionResults select)
     {
         // find number of parents
         List<bool> parents = new();
@@ -291,7 +291,7 @@ internal class Algorithm
         };
     }
 
-    private MutationResults Mutate(UserInputs userInputs, List<string> popPostCross)
+    private MutationResults Mutate(in UserInputs userInputs, List<string> popPostCross)
     {
         List<int?> mutationPoints = new();
         List<string> postMutBins = new();
