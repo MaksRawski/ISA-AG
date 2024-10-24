@@ -20,6 +20,40 @@ namespace ISA
             Min,
         }
         FunctionGoal functionGoal = FunctionGoal.Min;
+
+        struct UserInputs
+        {
+            public double a, b, d, pk, pm;
+            public int N, l;
+        }
+        struct Population
+        {
+            public List<double> xs, fs;
+        }
+        struct SelectionResults
+        {
+            public List<double> gs, ps, qs, rs, xReals;
+            public List<string> xBins;
+        }
+        struct CrossoverResults
+        {
+            public List<bool> parents;
+            public List<string?> children;
+            public List<List<int>?> cuttingPoints;
+            public List<string> populationBin;
+            public int numOfParents;
+        }
+        struct Mutation
+        {
+            public List<int?> mutationPoints;
+            public List<string> xBins;
+            public Population population;
+        }
+
+        Random rand = new Random();
+        UserInputs userInputs;
+
+
         public MainWindow()
         {
             InitializeComponent();
@@ -68,25 +102,112 @@ namespace ISA
             int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
             TryParseDouble(PkLineEdit.Text, out double pk);
             TryParseDouble(PmLineEdit.Text, out double pm);
-
-            fillTable(a, b, d, N, l, pk, pm);
+            userInputs = new UserInputs
+            {
+                a = a,
+                b = b,
+                d = d,
+                pk = pk,
+                pm = pm,
+                N = N,
+                l = l,
+            };
+            fillTable(userInputs);
         }
 
-        private void fillTable(double a, double b, double d, int N, int l, double pk, double pm)
+        private void fillTable(UserInputs userInputs)
         {
-            int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
+            int decimalPlaces = (int)Math.Ceiling(-Math.Log10(userInputs.d));
             var tableData = new List<TableRow>();
-            Random rand = new Random();
 
-            double fExtreme = functionGoal == FunctionGoal.Max ? double.MaxValue : double.MinValue;
+            // fx, xs
+            Population population = generatePopulation(userInputs, functionGoal, out double fExtreme);
 
-            // pre compute: x, f(x)
+            // SELECTION -> gs, ps, qs, rs, xPreCrossReals, xPreCrossBins
+            SelectionResults selection = Select(userInputs, population.xs, fExtreme);
+
+            // CROSSOVER -> parents, cuttingPoints, children, popPostCross
+            CrossoverResults crossover = Crossover(userInputs, selection);
+
+            // MUTATION -> mutationPoints, postMutBins, postMutReals, postMutFs
+            Mutation mutation = Mutate(userInputs, crossover.populationBin);
+
+            // filling the table
+            bool evenParent = true;
+            int foundParents = 0;
+            for (int i = 0; i < userInputs.N; i++)
+            {
+                string parentFirstPart = "-";
+                string parentSecondPart = "";
+                string childFirstPart = "-";
+                string childSecondPart = "";
+                string childFirstColor = "Black";
+                string childSecondColor = "Black";
+                string parentColor = "Black";
+
+                if (crossover.parents[i])
+                {
+                    evenParent = !evenParent;
+                    foundParents++;
+
+                    parentFirstPart = selection.xBins[i][..crossover.cuttingPoints[i]![0]];
+                    parentSecondPart = selection.xBins[i][crossover.cuttingPoints[i]![0]..];
+                    parentColor = !evenParent ? "Red" : "Blue";
+                    childFirstPart = crossover.children[i]![..crossover.cuttingPoints[i]![0]];
+                    childSecondPart = crossover.children[i]![crossover.cuttingPoints[i]![0]..];
+                    childFirstColor = !evenParent ? "Red" : "Blue";
+                    childSecondColor = evenParent ? "Red" : "Blue";
+
+                    if (!evenParent && foundParents == crossover.numOfParents)
+                    {
+                        parentColor = "Black";
+                        childFirstColor = "Black";
+                        childSecondColor = "Black";
+                    }
+                }
+
+                tableData.Add(new TableRow
+                {
+                    Lp = i + 1,
+                    XReal = Math.Round(population.xs[i], decimalPlaces),
+                    Fx = Math.Round(population.fs[i], decimalPlaces),
+                    Gx = Math.Round(selection.gs[i], decimalPlaces),
+                    P = Math.Round(selection.ps[i], decimalPlaces),
+                    Q = Math.Round(selection.qs[i], decimalPlaces),
+                    R = Math.Round(selection.rs[i], decimalPlaces),
+                    XCrossReal = Math.Round(selection.xReals[i], decimalPlaces),
+                    XCrossBin = selection.xBins[i],
+                    ParentFirstPart = parentFirstPart,
+                    ParentSecondPart = parentSecondPart,
+                    ParentColor = parentColor,
+                    Pc = crossover.cuttingPoints[i] == null ? "-" : string.Join(',', crossover.cuttingPoints[i]!),
+                    ChildFirstPart = childFirstPart,
+                    ChildSecondPart = childSecondPart,
+                    ChildFirstColor = childFirstColor,
+                    ChildSecondColor = childSecondColor,
+                    PopulationPostCross = crossover.populationBin[i],
+                    MutPoint = mutation.mutationPoints[i]?.ToString() ?? "-",
+                    PostMutBin = mutation.xBins[i],
+                    PostMutReal = Math.Round(mutation.population.xs[i], decimalPlaces),
+                    PostMutFx = Math.Round(mutation.population.fs[i], decimalPlaces),
+                });
+            }
+
+            dataGrid.ItemsSource = tableData;
+
+            double rowHeight = 22;
+            dataGrid.MaxHeight = rowHeight * 20;
+        }
+
+        private Population generatePopulation(UserInputs userInputs, FunctionGoal functionGoal, out double fExtreme)
+        {
+            fExtreme = functionGoal == FunctionGoal.Max ? double.MaxValue : double.MinValue;
             List<double> xs = new List<double>();
             List<double> fs = new List<double>();
 
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < userInputs.N; i++)
             {
-                double xReal = a + (b - a) * rand.NextDouble();
+                double xReal = userInputs.a + (userInputs.b - userInputs.a) * rand.NextDouble();
                 double fx = F(xReal);
 
                 // max: g(x) = f(x) - fmin + d
@@ -98,23 +219,30 @@ namespace ISA
                 fs.Add(fx);
             }
 
-            // g(x)
-            List<double> gs = new List<double>();
+            return new Population
+            {
+                xs = xs,
+                fs = fs
+            };
+        }
+        private SelectionResults Select(UserInputs userInputs, List<double> xs, double fExtreme)
+        {
+            List<double> gs = new();
             double gsSum = 0;
 
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < userInputs.N; i++)
             {
-                double gx = G(xs[i], fExtreme, d);
+                double gx = G(xs[i], fExtreme, userInputs.d);
                 gsSum += gx;
                 gs.Add(gx);
             }
 
             // p, q
             double q = 0;
-            List<double> ps = new List<double>();
-            List<double> qs = new List<double>();
+            List<double> ps = new();
+            List<double> qs = new();
 
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < userInputs.N; i++)
             {
                 double p = gs[i] / gsSum;
                 q += p;
@@ -122,30 +250,41 @@ namespace ISA
                 qs.Add(q);
             }
 
-            // SELECTION
-            List<double> rs = new List<double>();
-            List<double> xCrossReals = new List<double>();
-            List<string> xCrossBins = new List<string>();
+            List<double> rs = new();
+            List<double> xReals = new();
+            List<string> xBins = new();
 
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < userInputs.N; i++)
             {
                 double r = rand.NextDouble();
                 int xCrossIndex = GetCDFIndex(r, qs);
-                double xCrossReal = xs[xCrossIndex];
-                string xCrossBin = Real2Bin(xCrossReal, a, b, l);
+                double xPreCrossReal = xs[xCrossIndex];
+                string xPreCrossBin = Real2Bin(xPreCrossReal, userInputs.a, userInputs.b, userInputs.l);
                 rs.Add(r);
-                xCrossReals.Add(xCrossReal);
-                xCrossBins.Add(xCrossBin);
+                xReals.Add(xPreCrossReal);
+                xBins.Add(xPreCrossBin);
             }
 
-            // CROSSOVER
+            return new SelectionResults
+            {
+                gs = gs,
+                ps = ps,
+                qs = qs,
+                rs = rs,
+                xReals = xReals,
+                xBins = xBins
+            };
+        }
+
+        private CrossoverResults Crossover(UserInputs userInputs, SelectionResults select)
+        {
             // find number of parents
-            List<bool> parents = new List<bool>();
+            List<bool> parents = new();
             int numOfParents = 0;
 
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < userInputs.N; i++)
             {
-                bool parent = rand.NextDouble() <= pk;
+                bool parent = rand.NextDouble() <= userInputs.pk;
                 parents.Add(parent);
                 if (parent) numOfParents++;
             }
@@ -161,12 +300,12 @@ namespace ISA
             }
 
             // find a match and cross chromosomes
-            List<string?> children = new List<string?>();
-            List<List<int>?> cuttingPoints = new List<List<int>?>(N);
+            List<List<int>?> cuttingPoints = new(userInputs.N);
+            List<string?> children = new();
             string? secondChild = null;
             int? cuttingPoint = null;
 
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < userInputs.N; i++)
             {
                 string? child = null;
 
@@ -180,16 +319,16 @@ namespace ISA
                     }
                     else
                     {
-                        string R1 = xCrossBins[i];
+                        string R1 = select.xBins[i];
 
                         // find a match <3
-                        int R2Index = (i + 1) % N;
-                        while (!parents[R2Index]) { R2Index = (R2Index + 1) % N; }
+                        int R2Index = (i + 1) % userInputs.N;
+                        while (!parents[R2Index]) { R2Index = (R2Index + 1) % userInputs.N; }
 
-                        string R2 = xCrossBins[R2Index];
+                        string R2 = select.xBins[R2Index];
 
                         // cross chromosomes
-                        cuttingPoint = rand.Next(1, l);
+                        cuttingPoint = rand.Next(1, userInputs.l);
                         child = R1[..(int)cuttingPoint] + R2[(int)cuttingPoint..];
                         secondChild = R2[..(int)cuttingPoint] + R1[(int)cuttingPoint..];
 
@@ -216,31 +355,38 @@ namespace ISA
                 children.Add(child);
             }
 
-            List<string> popPostCross = new List<string>();
-            for (int i = 0; i < N; i++)
+            List<string> populationBin = new List<string>();
+            for (int i = 0; i < userInputs.N; i++)
             {
                 // parents die and children end up in their place
-                if (parents[i]) popPostCross.Add(children[i]!);
-                else popPostCross.Add(xCrossBins[i]);
+                if (parents[i]) populationBin.Add(children[i]!);
+                else populationBin.Add(select.xBins[i]);
             }
 
-            for (int i = 0; i < N; i++)
+            return new CrossoverResults
             {
+                children = children,
+                cuttingPoints = cuttingPoints,
+                parents = parents,
+                populationBin = populationBin,
+                numOfParents = numOfParents
+            };
+        }
 
-            }
-
-            // MUTATION
+        private Mutation Mutate(UserInputs userInputs, List<string> popPostCross)
+        {
             List<int?> mutationPoints = new();
             List<string> postMutBins = new();
             List<double> postMutReals = new();
             List<double> postMutFs = new();
-            for (int i = 0; i < N; i++)
+
+            for (int i = 0; i < userInputs.N; i++)
             {
                 double r = rand.NextDouble();
                 int? mutPoint = null;
-                if (r <= pm)
+                if (r <= userInputs.pm)
                 {
-                    mutPoint = rand.Next(0, l);
+                    mutPoint = rand.Next(0, userInputs.l);
                 }
                 mutationPoints.Add(mutPoint + 1);
 
@@ -252,78 +398,16 @@ namespace ISA
                     postMutBin = new string(chars);
                 }
                 postMutBins.Add(postMutBin);
-                double postMutReal = Bin2Real(postMutBin, a, b, l);
+                double postMutReal = Bin2Real(postMutBin, userInputs.a, userInputs.b, userInputs.l);
                 postMutReals.Add(postMutReal);
                 postMutFs.Add(F(postMutReal));
             }
-
-            // filling the table
-            bool evenParent = true;
-            int foundParents = 0;
-            for (int i = 0; i < N; i++)
-            {
-                string parentFirstPart = "-";
-                string parentSecondPart = "";
-                string childFirstPart = "-";
-                string childSecondPart = "";
-                string childFirstColor = "Black";
-                string childSecondColor = "Black";
-                string parentColor = "Black";
-
-                if (parents[i])
-                {
-                    evenParent = !evenParent;
-                    foundParents++;
-
-                    parentFirstPart = xCrossBins[i][..cuttingPoints[i]![0]];
-                    parentSecondPart = xCrossBins[i][cuttingPoints[i]![0]..];
-                    parentColor = !evenParent ? "Red" : "Blue";
-                    childFirstPart = children[i]![..cuttingPoints[i]![0]];
-                    childSecondPart = children[i]![cuttingPoints[i]![0]..];
-                    childFirstColor = !evenParent ? "Red" : "Blue";
-                    childSecondColor = evenParent ? "Red" : "Blue";
-
-                    if (!evenParent && foundParents == numOfParents)
-                    {
-                        parentColor = "Black";
-                        childFirstColor = "Black";
-                        childSecondColor = "Black";
-                    }
-                }
-
-                tableData.Add(new TableRow
-                {
-                    Lp = i + 1,
-                    XReal = Math.Round(xs[i], decimalPlaces),
-                    Fx = Math.Round(fs[i], decimalPlaces),
-                    Gx = Math.Round(gs[i], decimalPlaces),
-                    P = Math.Round(ps[i], decimalPlaces),
-                    Q = Math.Round(qs[i], decimalPlaces),
-                    R = Math.Round(rs[i], decimalPlaces),
-                    XCrossReal = Math.Round(xCrossReals[i], decimalPlaces),
-                    XCrossBin = xCrossBins[i],
-                    ParentFirstPart = parentFirstPart,
-                    ParentSecondPart = parentSecondPart,
-                    ParentColor = parentColor,
-                    Pc = cuttingPoints[i] == null ? "-" : string.Join(',', cuttingPoints[i]!),
-                    ChildFirstPart = childFirstPart,
-                    ChildSecondPart = childSecondPart,
-                    ChildFirstColor = childFirstColor,
-                    ChildSecondColor = childSecondColor,
-                    PopulationPostCross = popPostCross[i],
-                    MutPoint = mutationPoints[i]?.ToString() ?? "-",
-                    PostMutBin = postMutBins[i],
-                    PostMutReal = Math.Round(postMutReals[i], decimalPlaces),
-                    PostMutFx = Math.Round(postMutFs[i], decimalPlaces),
-                });
-            }
-
-            dataGrid.ItemsSource = tableData;
-
-            double rowHeight = 22;
-            dataGrid.MaxHeight = rowHeight * 20;
+            return new Mutation {
+                mutationPoints = mutationPoints,
+                xBins = postMutBins,
+                population = new Population { xs = postMutReals, fs = postMutFs }
+            };
         }
-
         // TODO refactor static functions into a different file
         public static int Bin2Int(string binaryString)
         {
@@ -352,22 +436,6 @@ namespace ISA
             return Int2Real(Bin2Int(x), a, b, l);
         }
 
-        public static int GetCDFIndex(double r, List<double> qs)
-        {
-            int low = 0, high = qs.Count - 1;
-
-            while (low < high)
-            {
-                int mid = (low + high) / 2;
-
-                if (qs[mid] < r)
-                    low = mid + 1;
-                else
-                    high = mid;
-            }
-
-            return low;
-        }
         private static double F(double x)
         {
             return -(x + 1) * (x - 1) * (x - 2);
@@ -384,6 +452,30 @@ namespace ISA
         {
             return functionGoal == FunctionGoal.Max ?
                 Gmax(x, fExtreme, d) : Gmin(x, fExtreme, d);
+        }
+
+        /// <summary>
+        /// Finds the index of the smallest element in the sorted list 'qs' that is greater than or equal to the given value 'r'.
+        /// This function performs a binary search on the list to achieve O(log n) time complexity.
+        /// </summary>
+        /// <param name="r">The threshold value to compare against the elements in 'qs'.</param>
+        /// <param name="qs">A sorted list of double values representing cumulative distribution function (CDF) values.</param>
+        /// <returns>The index of the first element in 'qs' that is greater than or equal to 'r'.</returns>
+        public static int GetCDFIndex(double r, List<double> qs)
+        {
+            int low = 0, high = qs.Count - 1;
+
+            while (low < high)
+            {
+                int mid = (low + high) / 2;
+
+                if (qs[mid] < r)
+                    low = mid + 1;
+                else
+                    high = mid;
+            }
+
+            return low;
         }
     }
 

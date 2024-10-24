@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\21422_Maksymilian_Rawski\ISA.csproj" />
+    <ProjectReference Include="..\ISA\ISA.csproj" />
   </ItemGroup>
 
   <ItemGroup>
