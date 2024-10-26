@@ -76,23 +76,28 @@ namespace ISA
 
             return low;
         }
-        public static Func<double, double>? ParseFunction(string expression)
+        public static bool TryParseFunction(string expression, out Func<double, double>? f)
+        {
+            f = null;
+            try
+            {
+                f = ParseFunction(expression);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
+        public static Func<double, double> ParseFunction(string expression)
         {
             // Define a parameter 'x' of type double
             ParameterExpression param = Expression.Parameter(typeof(double), "x");
 
-            Func<double, double>? f = null;
-            try
-            {
-                // Use DataTable's Compute to parse and evaluate the expression as a double
-                var lambda = System.Linq.Dynamic.Core.DynamicExpressionParser
-                    .ParseLambda(new[] { param }, typeof(double), expression);
-                f = (Func<double, double>)lambda.Compile();
-            }
-            catch (System.Linq.Dynamic.Core.Exceptions.ParseException)
-            {
-                return null;
-            }
+            var lambda = System.Linq.Dynamic.Core.DynamicExpressionParser
+                .ParseLambda(new[] { param }, typeof(double), expression);
+
+            var f = (Func<double, double>)lambda.Compile();
 
             return f;
         }

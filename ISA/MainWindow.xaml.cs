@@ -33,6 +33,7 @@ namespace ISA
             PkLineEdit.Text = "0.75";
             PmLineEdit.Text = "0.002";
 
+            fLineEdit.TextChanged += ValidateInputs;
             aLineEdit.TextChanged += ValidateInputs;
             bLineEdit.TextChanged += ValidateInputs;
             NLineEdit.TextChanged += ValidateInputs;
@@ -51,6 +52,7 @@ namespace ISA
                            int.TryParse(NLineEdit.Text, out int n) && n >= 0 &&
                            TryParseDouble(PkLineEdit.Text, out double pk) && pk >= 0 && pk <= 1 &&
                            TryParseDouble(PmLineEdit.Text, out double pm) && pm >= 0 && pm <= 1 &&
+                           Utils.TryParseFunction(fLineEdit.Text, out var _) && 
                            dComboBox.SelectedItem != null;
 
             startButton.IsEnabled = isValid;
