@@ -33,6 +33,7 @@ namespace ISA
             PkLineEdit.Text = "0.75";
             PmLineEdit.Text = "0.002";
 
+            fLineEdit.TextChanged += ValidateInputs;
             aLineEdit.TextChanged += ValidateInputs;
             bLineEdit.TextChanged += ValidateInputs;
             NLineEdit.TextChanged += ValidateInputs;
@@ -44,14 +45,16 @@ namespace ISA
         {
             return double.TryParse(input.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out n);
         }
-        private void ValidateInputs(object sender, EventArgs e)
+        private void ValidateInputs(object sender, EventArgs _)
         {
-            bool isValid = TryParseDouble(aLineEdit.Text, out double a) &&
-                           TryParseDouble(bLineEdit.Text, out double b) && a < b &&
-                           int.TryParse(NLineEdit.Text, out int n) && n >= 0 &&
-                           TryParseDouble(PkLineEdit.Text, out double pk) && pk >= 0 && pk <= 1 &&
-                           TryParseDouble(PmLineEdit.Text, out double pm) && pm >= 0 && pm <= 1 &&
-                           dComboBox.SelectedItem != null;
+            bool isValid =
+                TryParseDouble(aLineEdit.Text, out double a) &&
+                TryParseDouble(bLineEdit.Text, out double b) && a < b &&
+                int.TryParse(NLineEdit.Text, out int n) && n >= 0 &&
+                TryParseDouble(PkLineEdit.Text, out double pk) && pk >= 0 && pk <= 1 &&
+                TryParseDouble(PmLineEdit.Text, out double pm) && pm >= 0 && pm <= 1 &&
+                //FunctionParser.TryParseFunction(fLineEdit.Text, out var __) &&
+                dComboBox.SelectedItem != null;
 
             startButton.IsEnabled = isValid;
         }
@@ -64,10 +67,10 @@ namespace ISA
             int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
             _ = TryParseDouble(PkLineEdit.Text, out double pk);
             _ = TryParseDouble(PmLineEdit.Text, out double pm);
-            FunctionGoal functionGoal = 
+            FunctionGoal functionGoal =
                 functionGoalComboBox.SelectedIndex == 0 ? FunctionGoal.Max : FunctionGoal.Min;
-            //var f = (double x) => -(x + 1) * (x - 1) * (x - 2);
-            Func<double, double> f = Utils.ParseFunction(fLineEdit.Text);
+
+            Func<double, double> f = FunctionParser.Parse(fLineEdit.Text);
 
             var userInputs = new UserInputs
             {

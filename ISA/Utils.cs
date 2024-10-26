@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ISA
 {
@@ -12,7 +11,7 @@ namespace ISA
         Max,
         Min,
     }
-    public class Utils
+    public static class Utils
     {
         public static int Bin2Int(string binaryString)
         {
@@ -75,26 +74,6 @@ namespace ISA
             }
 
             return low;
-        }
-        public static Func<double, double>? ParseFunction(string expression)
-        {
-            // Define a parameter 'x' of type double
-            ParameterExpression param = Expression.Parameter(typeof(double), "x");
-
-            Func<double, double>? f = null;
-            try
-            {
-                // Use DataTable's Compute to parse and evaluate the expression as a double
-                var lambda = System.Linq.Dynamic.Core.DynamicExpressionParser
-                    .ParseLambda(new[] { param }, typeof(double), expression);
-                f = (Func<double, double>)lambda.Compile();
-            }
-            catch (System.Linq.Dynamic.Core.Exceptions.ParseException)
-            {
-                return null;
-            }
-
-            return f;
         }
     }
     public class TableRow
