@@ -37,19 +37,15 @@ internal class Algorithm
     {
         var tableData = new List<TableRow>();
 
-        // fx, xs
         Population population = GeneratePopulation(userInputs, out double fExtreme);
 
-        // SELECTION -> gs, ps, qs, rs, xPreCrossReals, xPreCrossBins
         SelectionResults selection = Select(userInputs, population.xs, fExtreme);
 
-        // CROSSOVER -> parents, cuttingPoints, children, popPostCross
         CrossoverResults crossover = Crossover(userInputs, selection);
 
-        // MUTATION -> mutationPoints, postMutBins, postMutReals, postMutFs
         MutationResults mutation = Mutate(userInputs, crossover.populationBin);
 
-        // filling the table
+        // Fill the table
         bool evenParent = true;
         int foundParents = 0;
         for (int i = 0; i < userInputs.N; i++)
@@ -86,7 +82,7 @@ internal class Algorithm
             tableData.Add(new TableRow
             {
                 Lp = i + 1,
-                XReal = Math.Round(population.xs[i], userInputs.decimalPlaces),
+                XReal = population.xs[i],
                 Fx = Math.Round(population.fs[i], userInputs.decimalPlaces),
                 Gx = Math.Round(selection.gs[i], userInputs.decimalPlaces),
                 P = Math.Round(selection.ps[i], userInputs.decimalPlaces),
@@ -154,7 +150,6 @@ internal class Algorithm
             gs.Add(gx);
         }
 
-        // p, q
         double q = 0;
         List<double> ps = new();
         List<double> qs = new();
@@ -232,7 +227,6 @@ internal class Algorithm
                 {
                     child = secondChild;
                     secondChild = null;
-                    // current cutting point will be added later
                 }
                 else
                 {

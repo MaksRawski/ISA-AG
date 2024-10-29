@@ -67,9 +67,9 @@ namespace ISA
             int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
             _ = TryParseDouble(PkLineEdit.Text, out double pk);
             _ = TryParseDouble(PmLineEdit.Text, out double pm);
+
             FunctionGoal functionGoal = 
                 functionGoalComboBox.SelectedIndex == 0 ? FunctionGoal.Max : FunctionGoal.Min;
-            //var f = (double x) => -(x + 1) * (x - 1) * (x - 2);
             Func<double, double> f = Utils.ParseFunction(fLineEdit.Text);
 
             var userInputs = new UserInputs

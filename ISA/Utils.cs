@@ -54,8 +54,7 @@ namespace ISA
                 Gmax(f, x, fExtreme, d) : Gmin(f, x, fExtreme, d);
         }
         /// <summary>
-        /// Finds the index of the smallest element in the sorted list 'qs' that is greater than or equal to the given value 'r'.
-        /// This function performs a binary search on the list to achieve O(log n) time complexity.
+        /// Finds the index of the smallest element in the sorted list 'qs' that is greater than or equal to the given value 'r' using Binary Search.
         /// </summary>
         /// <param name="r">The threshold value to compare against the elements in 'qs'.</param>
         /// <param name="qs">A sorted list of double values representing cumulative distribution function (CDF).</param>
