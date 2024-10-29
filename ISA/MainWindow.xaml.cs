@@ -6,7 +6,7 @@ namespace ISA
     struct UserInputs
     {
         public double a, b, d, pk, pm;
-        public int N, l;
+        public int decimalPlaces, N, l;
         public FunctionGoal functionGoal;
         public Func<double, double> f;
     }
@@ -62,6 +62,7 @@ namespace ISA
             _ = TryParseDouble(aLineEdit.Text, out double a);
             _ = TryParseDouble(bLineEdit.Text, out double b);
             double d = (double)dComboBox.SelectedItem;
+            int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
             int N = int.Parse(NLineEdit.Text);
             int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
             _ = TryParseDouble(PkLineEdit.Text, out double pk);
@@ -76,6 +77,7 @@ namespace ISA
                 a = a,
                 b = b,
                 d = d,
+                decimalPlaces = decimalPlaces,
                 pk = pk,
                 pm = pm,
                 N = N,

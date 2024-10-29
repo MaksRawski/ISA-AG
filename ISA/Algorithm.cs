@@ -35,7 +35,6 @@ internal class Algorithm
     
     public void FillTable(in UserInputs userInputs, DataGrid dataGrid)
     {
-        int decimalPlaces = (int)Math.Ceiling(-Math.Log10(userInputs.d));
         var tableData = new List<TableRow>();
 
         // fx, xs
@@ -87,13 +86,13 @@ internal class Algorithm
             tableData.Add(new TableRow
             {
                 Lp = i + 1,
-                XReal = Math.Round(population.xs[i], decimalPlaces),
-                Fx = Math.Round(population.fs[i], decimalPlaces),
-                Gx = Math.Round(selection.gs[i], decimalPlaces),
-                P = Math.Round(selection.ps[i], decimalPlaces),
-                Q = Math.Round(selection.qs[i], decimalPlaces),
-                R = Math.Round(selection.rs[i], decimalPlaces),
-                XCrossReal = Math.Round(selection.xReals[i], decimalPlaces),
+                XReal = Math.Round(population.xs[i], userInputs.decimalPlaces),
+                Fx = Math.Round(population.fs[i], userInputs.decimalPlaces),
+                Gx = Math.Round(selection.gs[i], userInputs.decimalPlaces),
+                P = Math.Round(selection.ps[i], userInputs.decimalPlaces),
+                Q = Math.Round(selection.qs[i], userInputs.decimalPlaces),
+                R = Math.Round(selection.rs[i], userInputs.decimalPlaces),
+                XCrossReal = Math.Round(selection.xReals[i], userInputs.decimalPlaces),
                 XCrossBin = selection.xBins[i],
                 ParentFirstPart = parentFirstPart,
                 ParentSecondPart = parentSecondPart,
@@ -106,8 +105,8 @@ internal class Algorithm
                 PopulationPostCross = crossover.populationBin[i],
                 MutPoint = mutation.mutationPoints[i]?.ToString() ?? "-",
                 PostMutBin = mutation.xBins[i],
-                PostMutReal = Math.Round(mutation.population.xs[i], decimalPlaces),
-                PostMutFx = Math.Round(mutation.population.fs[i], decimalPlaces),
+                PostMutReal = Math.Round(mutation.population.xs[i], userInputs.decimalPlaces),
+                PostMutFx = Math.Round(mutation.population.fs[i], userInputs.decimalPlaces),
             });
         }
 
@@ -125,8 +124,8 @@ internal class Algorithm
         for (int i = 0; i < userInputs.N; i++)
         {
             double xReal = userInputs.a + (userInputs.b - userInputs.a) * rand.NextDouble();
+            xReal = Math.Round(xReal, userInputs.decimalPlaces);
             double fx = userInputs.f(xReal);
-
             // max: g(x) = f(x) - fmin + d
             // min: g(x) = -(f(x) - fmax) + d
             if (userInputs.functionGoal == FunctionGoal.Max ? fx < fExtreme : fx > fExtreme)

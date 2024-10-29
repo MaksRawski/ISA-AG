@@ -91,7 +91,6 @@ namespace ISA
         }
         public static Func<double, double> ParseFunction(string expression)
         {
-            // Define a parameter 'x' of type double
             ParameterExpression param = Expression.Parameter(typeof(double), "x");
 
             var lambda = System.Linq.Dynamic.Core.DynamicExpressionParser
