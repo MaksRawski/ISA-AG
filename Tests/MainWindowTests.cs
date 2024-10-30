@@ -23,7 +23,7 @@ namespace ISA.Tests
         public void GetCDFIndexTest(double[] qsArray, double r, int expectedIndex)
         {
             List<double> qs = new List<double>(qsArray);
-            int result = MainWindow.GetCDFIndex(r, qs);
+            int result = Utils.GetCDFIndex(r, qs);
 
             // Assert
             Assert.AreEqual(
