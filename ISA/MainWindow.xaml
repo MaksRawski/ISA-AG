@@ -5,7 +5,7 @@
         <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Grid.ColumnSpan="2">
             <StackPanel x:Name="inputs" Orientation="Horizontal">
                 <TextBlock Text="f(x) = " Margin="5,0,0,0" />
-                <TextBox x:Name="fLineEdit" Width="150" Margin="0,0,10,0"/>
+                <TextBox x:Name="fLineEdit" Width="250" Margin="0,0,10,0"/>
                 <TextBlock Text="cel = "/>
                 <ComboBox x:Name="functionGoalComboBox" Margin="0,0,10,0"/>
                 <TextBlock Text="a = " Margin="5,0,0,0" />

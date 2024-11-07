@@ -24,11 +24,11 @@ namespace ISA
             functionGoalComboBox.Items.Add("MAX");
             functionGoalComboBox.Items.Add("MIN");
 
-            fLineEdit.Text = "-(x+1)*(x-1)*(x-2)";
-            aLineEdit.Text = "-2";
-            bLineEdit.Text = "3";
+            fLineEdit.Text = "mod(x,1) * (cos(20*pi*x) - sin(x))";
+            aLineEdit.Text = "-4";
+            bLineEdit.Text = "12";
             dComboBox.SelectedIndex = 2;
-            functionGoalComboBox.SelectedIndex = 1;
+            functionGoalComboBox.SelectedIndex = 0;
             NLineEdit.Text = "10";
             PkLineEdit.Text = "0.75";
             PmLineEdit.Text = "0.002";

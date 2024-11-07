@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using org.mariuszgromada.math.mxparser;
 
 namespace ISA
 {
@@ -77,27 +76,34 @@ namespace ISA
         }
         public static bool TryParseFunction(string expression, out Func<double, double>? f)
         {
+            Argument xArg = new("x");
+            Expression e = new(expression);
+            e.addArguments(xArg);
+            bool validFunction = e.checkSyntax();
+
             f = null;
-            try
+            if (validFunction)
             {
-                f = ParseFunction(expression);
+                f = (double x) =>
+                {
+                    e.setArgumentValue("x", x);
+                    return e.calculate();
+                };
             }
-            catch
-            {
-                return false;
-            }
-            return true;
+
+            return validFunction;
         }
         public static Func<double, double> ParseFunction(string expression)
         {
-            ParameterExpression param = Expression.Parameter(typeof(double), "x");
+            Argument xArg = new("x");
+            Expression e = new(expression);
+            e.addArguments(xArg);
 
-            var lambda = System.Linq.Dynamic.Core.DynamicExpressionParser
-                .ParseLambda(new[] { param }, typeof(double), expression);
-
-            var f = (Func<double, double>)lambda.Compile();
-
-            return f;
+            return (double x) =>
+            {
+                e.setArgumentValue("x", x);
+                return e.calculate();
+            };
         }
     }
     public class TableRow
