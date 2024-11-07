@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using org.mariuszgromada.math.mxparser;
+﻿using org.mariuszgromada.math.mxparser;
 
 namespace ISA
 {
@@ -79,10 +75,10 @@ namespace ISA
             Argument xArg = new("x");
             Expression e = new(expression);
             e.addArguments(xArg);
-            bool validFunction = e.checkSyntax();
+            bool isFunctionValid = e.checkSyntax();
 
             f = null;
-            if (validFunction)
+            if (isFunctionValid)
             {
                 f = (double x) =>
                 {
@@ -91,7 +87,7 @@ namespace ISA
                 };
             }
 
-            return validFunction;
+            return isFunctionValid;
         }
         public static Func<double, double> ParseFunction(string expression)
         {
