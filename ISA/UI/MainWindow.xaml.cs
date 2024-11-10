@@ -80,7 +80,7 @@ namespace UI
                 f = f,
             };
             var algo = new Algorithm();
-            algo.FillTable(userInputs, out List<TableRow> rows);
+            algo.Run(userInputs, out List<TableRow> rows);
             dataGrid.ItemsSource = rows;
 
         }

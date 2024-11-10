@@ -29,8 +29,12 @@ public struct MutationResults
 public class Algorithm
 {
     Random rand = new();
+    public void SetSeed(int seed)
+    {
+        rand = new(seed);
+    }
     
-    public void FillTable(in UserInputs userInputs, out List<TableRow> tableData)
+    public void Run(in UserInputs userInputs, out List<TableRow> tableData)
     {
         tableData = new List<TableRow>();
 
@@ -103,7 +107,7 @@ public class Algorithm
             });
         }
     }
-    private Population GeneratePopulation(in UserInputs userInputs, out double fExtreme)
+    public Population GeneratePopulation(in UserInputs userInputs, out double fExtreme)
     {
         fExtreme = userInputs.functionGoal == FunctionGoal.Max ? double.MaxValue : double.MinValue;
         List<double> xs = new();
@@ -130,7 +134,7 @@ public class Algorithm
         };
     }
     
-    private SelectionResults Select(in UserInputs userInputs, List<double> xs, double fExtreme)
+    public SelectionResults Select(in UserInputs userInputs, List<double> xs, double fExtreme)
     {
         List<double> gs = new();
         double gsSum = 0;
@@ -180,7 +184,7 @@ public class Algorithm
         };
     }
 
-    private CrossoverResults Crossover(in UserInputs userInputs, in SelectionResults select)
+    public CrossoverResults Crossover(in UserInputs userInputs, in SelectionResults select)
     {
         // find number of parents
         List<bool> parents = new();
@@ -276,7 +280,7 @@ public class Algorithm
         };
     }
 
-    private MutationResults Mutate(in UserInputs userInputs, List<string> popPostCross)
+    public MutationResults Mutate(in UserInputs userInputs, List<string> popPostCross)
     {
         List<int?> mutationPoints = new();
         List<string> postMutBins = new();
