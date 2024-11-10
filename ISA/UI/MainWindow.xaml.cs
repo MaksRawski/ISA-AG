@@ -1,15 +1,9 @@
 ﻿using System.Globalization;
 using System.Windows;
+using Core;
 
-namespace ISA
+namespace UI
 {
-    struct UserInputs
-    {
-        public double a, b, d, pk, pm;
-        public int decimalPlaces, N, l;
-        public FunctionGoal functionGoal;
-        public Func<double, double> f;
-    }
     public partial class MainWindow : Window
     {
         public MainWindow()
@@ -86,7 +80,9 @@ namespace ISA
                 f = f,
             };
             var algo = new Algorithm();
-            algo.FillTable(userInputs, dataGrid);
+            algo.FillTable(userInputs, out List<TableRow> rows);
+            dataGrid.ItemsSource = rows;
+
         }
     }
 }

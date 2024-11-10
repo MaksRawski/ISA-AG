@@ -1,4 +1,6 @@
-﻿namespace ISA.Tests
+﻿using Core;
+
+namespace ISA.Tests
 {
     [TestClass()]
     public class UnitTests

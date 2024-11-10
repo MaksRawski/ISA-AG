@@ -1,2 +1,6 @@
 *.exe
 *.zip
+.vs
+/**/.vs
+/**/bin
+/**/obj

@@ -1,41 +1,38 @@
-﻿using System.Windows.Controls;
-
-namespace ISA;
-
-internal class Algorithm
+﻿namespace Core;
+public struct Population
 {
-    struct Population
-    {
-        public List<double> xs, fs;
-    }
+    public List<double> xs, fs;
+}
 
-    struct SelectionResults
-    {
-        public List<double> gs, ps, qs, rs, xReals;
-        public List<string> xBins;
-    }
+public struct SelectionResults
+{
+    public List<double> gs, ps, qs, rs, xReals;
+    public List<string> xBins;
+}
 
-    struct CrossoverResults
-    {
-        public List<bool> parents;
-        public List<string?> children;
-        public List<List<int>?> cuttingPoints;
-        public List<string> populationBin;
-        public int numOfParents;
-    }
+public struct CrossoverResults
+{
+    public List<bool> parents;
+    public List<string?> children;
+    public List<List<int>?> cuttingPoints;
+    public List<string> populationBin;
+    public int numOfParents;
+}
 
-    struct MutationResults
-    {
-        public List<int?> mutationPoints;
-        public List<string> xBins;
-        public Population population;
-    }
+public struct MutationResults
+{
+    public List<int?> mutationPoints;
+    public List<string> xBins;
+    public Population population;
+}
 
+public class Algorithm
+{
     Random rand = new();
     
-    public void FillTable(in UserInputs userInputs, DataGrid dataGrid)
+    public void FillTable(in UserInputs userInputs, out List<TableRow> tableData)
     {
-        var tableData = new List<TableRow>();
+        tableData = new List<TableRow>();
 
         Population population = GeneratePopulation(userInputs, out double fExtreme);
 
@@ -105,11 +102,6 @@ internal class Algorithm
                 PostMutFx = Math.Round(mutation.population.fs[i], userInputs.decimalPlaces),
             });
         }
-
-        dataGrid.ItemsSource = tableData;
-
-        double rowHeight = 22;
-        dataGrid.MaxHeight = rowHeight * 20;
     }
     private Population GeneratePopulation(in UserInputs userInputs, out double fExtreme)
     {
