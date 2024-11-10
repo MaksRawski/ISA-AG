@@ -1,16 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ISA;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-
-namespace ISA.Tests
+﻿namespace ISA.Tests
 {
     [TestClass()]
-    public class MainWindowTests
+    public class UnitTests
     {
         [DataTestMethod]
         [DataRow(new double[] { 0.1, 0.3, 0.6, 1.0 }, 0.2, 1)]
