@@ -3,20 +3,24 @@ using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Running;
 using Core;
 using org.mariuszgromada.math.mxparser;
+using System.Diagnostics;
 
 namespace Benchmarks
 {
-    [RPlotExporter]
+    //[RPlotExporter]
     public class Algo
     {
         private readonly Algorithm algo;
 
         private readonly double fExtreme;
-        private readonly UserInputs userInputs;
+        private readonly UserInputs userInputsEz;
+        private readonly UserInputs userInputsExtreme;
 
-        private readonly Population population;
-        private readonly SelectionResults selectionResults;
-        private readonly CrossoverResults crossoverResults;
+        public readonly Population population;
+        public readonly List<double> popXs;
+        public readonly List<string> popBin;
+        public readonly SelectionResults selectionResults;
+        public readonly CrossoverResults crossoverResults;
 
         public Algo() { 
             algo = new Algorithm();
@@ -26,39 +30,63 @@ namespace Benchmarks
             var f = Utils.ParseFunction("mod(x,1) * (cos(20*pi*x) - sin(x))");
 
 
-            userInputs = new UserInputs
+            userInputsEz = new UserInputs
             {
-                f = f,
                 a = -4,
                 b = 12,
                 d = 0.001,
-                l = 14,
                 decimalPlaces = 3,
-                functionGoal = FunctionGoal.Max,
-                N = 10,
+                elitism = true,
                 pk = 0.75,
                 pm = 0.002,
+                N = 10,
+                T = 50,
+                l = 14,
+                functionGoal = FunctionGoal.Max,
+                f = f,
+            };
+            userInputsExtreme = new UserInputs
+            {
+                a = -4,
+                b = 12,
+                d = 0.001,
+                decimalPlaces = 3,
+                elitism = true,
+                pk = 0.75,
+                pm = 0.002,
+                N = 80,
+                T = 100,
+                l = 14,
+                functionGoal = FunctionGoal.Max,
+                f = f,
             };
 
             // init some results to use as inputs for later calls
-            population = algo.GeneratePopulation(userInputs, out fExtreme);
-            selectionResults = algo.Select(userInputs, population.xs, fExtreme);
-            crossoverResults = algo.Crossover(userInputs, selectionResults);
-            algo.Mutate(userInputs, crossoverResults.populationBin);
+            population = algo.GeneratePopulation(userInputsEz, out fExtreme);
+            selectionResults = algo.Select(userInputsEz, population.xs, fExtreme);
+            crossoverResults = algo.Crossover(userInputsEz, selectionResults);
+            algo.Mutate(userInputsEz, crossoverResults.populationBin);
+            popXs = population.xs;
+            popBin = crossoverResults.populationBin;
         }
 
         [Benchmark]
-        public Population GeneratePopulation() => algo.GeneratePopulation(userInputs, out double _);
+        public Population GeneratePopulation() => algo.GeneratePopulation(userInputsEz, out double _);
 
         [Benchmark]
-        public SelectionResults Select() => algo.Select(userInputs, population.xs, fExtreme);
+        public SelectionResults Select() => algo.Select(userInputsEz, popXs, fExtreme);
+
+        [Benchmark]
+        public CrossoverResults Crossover() => algo.Crossover(userInputsEz, selectionResults);
+
+        [Benchmark]
+        public MutationResults Mutation() => algo.Mutate(userInputsEz, popBin);
+
+        [Benchmark]
+        public void RunEz() => algo.Run(userInputsEz, out var rows);
         
         [Benchmark]
-        public CrossoverResults Crossover() => algo.Crossover(userInputs, selectionResults);
-
-        [Benchmark]
-        public MutationResults Mutation() => algo.Mutate(userInputs, crossoverResults.populationBin);
-
+        public void RunExtreme() => algo.Run(userInputsExtreme, out var rows);
     }
 
     public class Program
