@@ -1,7 +1,7 @@
 ﻿<Window x:Class="UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" SizeToContent="WidthAndHeight">
-    <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
+    <Grid>
         <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Grid.ColumnSpan="2">
             <StackPanel x:Name="inputs" Orientation="Horizontal">
                 <TextBlock Text="f(x) = " Margin="5,0,0,0" />
@@ -16,60 +16,41 @@
                 <ComboBox x:Name="dComboBox" Margin="0,0,10,0"/>
                 <TextBlock Text="N = "/>
                 <TextBox x:Name="NLineEdit" Width="50" Margin="0,0,10,0"/>
+                <TextBlock Text="T = "/>
+                <TextBox x:Name="TLineEdit" Width="50" Margin="0,0,10,0"/>
                 <TextBlock Text="pk = "/>
                 <TextBox x:Name="PkLineEdit" Width="50" Margin="0,0,10,0"/>
                 <TextBlock Text="pm = "/>
                 <TextBox x:Name="PmLineEdit" Width="50" Margin="0,0,10,0"/>
+                <TextBlock Text="elita = "/>
+                <CheckBox x:Name="elitismCheckbox" Margin="0,0,10,0" VerticalAlignment="Center"/>
                 <Button x:Name="startButton" Content="START" Click="StartButton_Click" Margin="0,0,5,0"/>
             </StackPanel>
 
-            <DataGrid x:Name="dataGrid" 
-                      AutoGenerateColumns="False"
-                      ScrollViewer.CanContentScroll="True"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Auto"
-                      CanUserAddRows="False"
-                      IsReadOnly="True"
-                      Margin="10">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Lp" Binding="{Binding Lp}" />
-                    <DataGridTextColumn Header="x real" Binding="{Binding XReal}" />
-                    <DataGridTextColumn Header="f(x)" Binding="{Binding Fx}" />
-                    <DataGridTextColumn Header="g(x)" Binding="{Binding Gx}" />
-                    <DataGridTextColumn Header="p" Binding="{Binding P}" />
-                    <DataGridTextColumn Header="q" Binding="{Binding Q}" />
-                    <DataGridTextColumn Header="r" Binding="{Binding R}" />
-                    <DataGridTextColumn Header="x real*" Binding="{Binding XCrossReal}" />
-                    <DataGridTextColumn Header="x bin*" Binding="{Binding XCrossBin}" />
-                    <DataGridTemplateColumn Header="rodzice">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock>
-                                    <Run Text="{Binding ParentFirstPart}" Foreground="{Binding ParentColor}" />    
-                                    <Run Text="{Binding ParentSecondPart}" Foreground="{Binding ParentColor}" />    
-                                </TextBlock>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="pc" Binding="{Binding Pc}" />
-                    <DataGridTemplateColumn Header="potomek">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock>
-                                    <Run Text="{Binding ChildFirstPart}" Foreground="{Binding ChildFirstColor}" />
-                                    <Run Text="{Binding ChildSecondPart}" Foreground="{Binding ChildSecondColor}" />
-                                </TextBlock>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="pop. po krzyżowaniu" Binding="{Binding PopulationPostCross}" />
-                    <DataGridTextColumn Header="punkt mutacji" Binding="{Binding MutPoint}" />
-                    <DataGridTextColumn Header="po mutacji" Binding="{Binding PostMutBin}" />
-                    <DataGridTextColumn Header="po mutacji real" Binding="{Binding PostMutReal}" />
-                    <DataGridTextColumn Header="f(x) po mut" Binding="{Binding PostMutFx}" />
-
-                </DataGrid.Columns>
-            </DataGrid>
+            <TabControl>
+                <TabItem Header="Dane">
+                    <DataGrid x:Name="DaneDataGrid" 
+                              AutoGenerateColumns="False"
+                              ScrollViewer.CanContentScroll="True"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto"
+                              CanUserAddRows="False"
+                              IsReadOnly="True"
+                              Margin="10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Lp" Binding="{Binding Lp}"></DataGridTextColumn>
+                            <DataGridTextColumn Header="xReal" Binding="{Binding XReal}"></DataGridTextColumn>
+                            <DataGridTextColumn Header="xBin" Binding="{Binding XBin}"></DataGridTextColumn>
+                            <DataGridTextColumn Header="f(x)" Binding="{Binding Fx}"></DataGridTextColumn>
+                            <DataGridTextColumn Header="%" Binding="{Binding Percent}"></DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+                <TabItem Header="Wykres">
+                </TabItem>
+                <TabItem Header="Testy">
+                </TabItem>
+            </TabControl>
         </StackPanel>
     </Grid>
 </Window>

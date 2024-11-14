@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using Core;
 
 namespace UI
@@ -24,8 +25,10 @@ namespace UI
             dComboBox.SelectedIndex = 2;
             functionGoalComboBox.SelectedIndex = 0;
             NLineEdit.Text = "10";
+            TLineEdit.Text = "50";
             PkLineEdit.Text = "0.75";
             PmLineEdit.Text = "0.002";
+            elitismCheckbox.IsChecked = true;
 
             fLineEdit.TextChanged += ValidateInputs;
             aLineEdit.TextChanged += ValidateInputs;
@@ -34,8 +37,10 @@ namespace UI
             dComboBox.SelectionChanged += ValidateInputs;
             PkLineEdit.TextChanged += ValidateInputs;
             PmLineEdit.TextChanged += ValidateInputs;
+            elitismCheckbox.Checked += ValidateInputs;
+            elitismCheckbox.Unchecked += ValidateInputs;
         }
-        private bool TryParseDouble(string input, out double n)
+        private static bool TryParseDouble(string input, out double n)
         {
             return double.TryParse(input.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out n);
         }
@@ -44,6 +49,7 @@ namespace UI
             bool isValid = TryParseDouble(aLineEdit.Text, out double a) &&
                            TryParseDouble(bLineEdit.Text, out double b) && a < b &&
                            int.TryParse(NLineEdit.Text, out int n) && n >= 0 &&
+                           int.TryParse(TLineEdit.Text, out int t) && t >= 0 &&
                            TryParseDouble(PkLineEdit.Text, out double pk) && pk >= 0 && pk <= 1 &&
                            TryParseDouble(PmLineEdit.Text, out double pm) && pm >= 0 && pm <= 1 &&
                            Utils.TryParseFunction(fLineEdit.Text, out var _) && 
@@ -57,7 +63,9 @@ namespace UI
             _ = TryParseDouble(bLineEdit.Text, out double b);
             double d = (double)dComboBox.SelectedItem;
             int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
+            bool elitism = (bool)elitismCheckbox.IsChecked;
             int N = int.Parse(NLineEdit.Text);
+            int T = int.Parse(TLineEdit.Text);
             int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
             _ = TryParseDouble(PkLineEdit.Text, out double pk);
             _ = TryParseDouble(PmLineEdit.Text, out double pm);
@@ -72,16 +80,21 @@ namespace UI
                 b = b,
                 d = d,
                 decimalPlaces = decimalPlaces,
+                elitism = elitism,
                 pk = pk,
                 pm = pm,
                 N = N,
+                T = T,
                 l = l,
                 functionGoal = functionGoal,
                 f = f,
             };
             var algo = new Algorithm();
             algo.Run(userInputs, out List<TableRow> rows);
-            dataGrid.ItemsSource = rows;
+            DaneDataGrid.ItemsSource = rows;
+
+            double rowHeight = 22;
+            DaneDataGrid.MaxHeight = rowHeight * 20;
 
         }
     }
