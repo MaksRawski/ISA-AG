@@ -34,77 +34,69 @@ public class Algorithm
         rand = new(seed);
     }
     
-    public void Run(in UserInputs userInputs, out List<TableRow> tableData)
+    public void Run(in UserInputs userInputs, out List<TableRow> rows)
     {
-        tableData = new List<TableRow>();
-
+        var functionGoal = userInputs.functionGoal;
         Population population = GeneratePopulation(userInputs, out double fExtreme);
 
-        SelectionResults selection = Select(userInputs, population.xs, fExtreme);
-
-        CrossoverResults crossover = Crossover(userInputs, selection);
-
-        MutationResults mutation = Mutate(userInputs, crossover.populationBin);
-
-        // Fill the table
-        bool evenParent = true;
-        int foundParents = 0;
-        for (int i = 0; i < userInputs.N; i++)
+        // perform GA for T generations
+        for (int i = 0; i < userInputs.T; i++)
         {
-            string parentFirstPart = "-";
-            string parentSecondPart = "";
-            string childFirstPart = "-";
-            string childSecondPart = "";
-            string childFirstColor = "Black";
-            string childSecondColor = "Black";
-            string parentColor = "Black";
+            // perform elitist selection if it's enabled
+            var elite = userInputs.elitism ?
+                population.xs
+                    .Zip(population.fs, (x, f) => (x, f))
+                    .OrderBy(pair => functionGoal == FunctionGoal.Max ? -pair.f : pair.f)
+                    .First()
+                : default;
 
-            if (crossover.parents[i])
+            SelectionResults selection = Select(userInputs, population.xs, fExtreme);
+
+            CrossoverResults crossover = Crossover(userInputs, selection);
+
+            MutationResults mutation = Mutate(userInputs, crossover.populationBin);
+
+            population = mutation.population;
+
+            if (userInputs.elitism && !population.xs.Contains(elite.x))
             {
-                evenParent = !evenParent;
-                foundParents++;
-
-                parentFirstPart = selection.xBins[i][..crossover.cuttingPoints[i]![0]];
-                parentSecondPart = selection.xBins[i][crossover.cuttingPoints[i]![0]..];
-                parentColor = !evenParent ? "Red" : "Blue";
-                childFirstPart = crossover.children[i]![..crossover.cuttingPoints[i]![0]];
-                childSecondPart = crossover.children[i]![crossover.cuttingPoints[i]![0]..];
-                childFirstColor = !evenParent ? "Red" : "Blue";
-                childSecondColor = evenParent ? "Red" : "Blue";
-
-                if (!evenParent && foundParents == crossover.numOfParents)
+                // insert the elite in a random place unless there is a better one at exactly that place
+                int r = rand.Next(0, userInputs.N);
+                if (population.fs[r] <= elite.f)
                 {
-                    parentColor = "Black";
-                    childFirstColor = "Black";
-                    childSecondColor = "Black";
+                    population.xs[r] = elite.x;
+                    population.fs[r] = elite.f;
                 }
             }
+        }
 
-            tableData.Add(new TableRow
+        // group final population members
+        int populationSize = population.xs.Count;
+        var groupedRows = population.xs
+            .Zip(population.fs, (x, f) => (x, f))
+            .GroupBy(item => item.x)
+            .Select(group => new TableRow
             {
-                Lp = i + 1,
-                XReal = population.xs[i],
-                Fx = Math.Round(population.fs[i], userInputs.decimalPlaces),
-                Gx = Math.Round(selection.gs[i], userInputs.decimalPlaces),
-                P = Math.Round(selection.ps[i], userInputs.decimalPlaces),
-                Q = Math.Round(selection.qs[i], userInputs.decimalPlaces),
-                R = Math.Round(selection.rs[i], userInputs.decimalPlaces),
-                XCrossReal = Math.Round(selection.xReals[i], userInputs.decimalPlaces),
-                XCrossBin = selection.xBins[i],
-                ParentFirstPart = parentFirstPart,
-                ParentSecondPart = parentSecondPart,
-                ParentColor = parentColor,
-                Pc = crossover.cuttingPoints[i] == null ? "-" : string.Join(',', crossover.cuttingPoints[i]!),
-                ChildFirstPart = childFirstPart,
-                ChildSecondPart = childSecondPart,
-                ChildFirstColor = childFirstColor,
-                ChildSecondColor = childSecondColor,
-                PopulationPostCross = crossover.populationBin[i],
-                MutPoint = mutation.mutationPoints[i]?.ToString() ?? "-",
-                PostMutBin = mutation.xBins[i],
-                PostMutReal = Math.Round(mutation.population.xs[i], userInputs.decimalPlaces),
-                PostMutFx = Math.Round(mutation.population.fs[i], userInputs.decimalPlaces),
+                XReal = group.Key,
+                Fx = group.First().f,
+                Percent = (double)group.Count() / populationSize
             });
+
+        rows = (userInputs.functionGoal == FunctionGoal.Max
+            ? groupedRows.OrderByDescending(row => row.Fx)
+            : groupedRows.OrderBy(row => row.Fx))
+            .ToList();
+
+
+        // format rows
+        int lp = 1;
+        foreach (TableRow row in rows)
+        {
+            row.Lp = lp++;
+            row.XReal = Math.Round(row.XReal, userInputs.decimalPlaces);
+            row.Fx = Math.Round(row.Fx, userInputs.decimalPlaces);
+            row.XBin = Utils.Real2Bin(row.XReal, userInputs.a, userInputs.b, userInputs.l);
+            row.Percent = Math.Round(row.Percent * 100, userInputs.decimalPlaces);
         }
     }
     public Population GeneratePopulation(in UserInputs userInputs, out double fExtreme)
@@ -118,6 +110,7 @@ public class Algorithm
             double xReal = userInputs.a + (userInputs.b - userInputs.a) * rand.NextDouble();
             xReal = Math.Round(xReal, userInputs.decimalPlaces);
             double fx = userInputs.f(xReal);
+            fx = Math.Round(fx, userInputs.decimalPlaces);
             // max: g(x) = f(x) - fmin + d
             // min: g(x) = -(f(x) - fmax) + d
             if (userInputs.functionGoal == FunctionGoal.Max ? fx < fExtreme : fx > fExtreme)
@@ -305,9 +298,15 @@ public class Algorithm
                 postMutBin = new string(chars);
             }
             postMutBins.Add(postMutBin);
+            
             double postMutReal = Utils.Bin2Real(postMutBin, userInputs.a, userInputs.b, userInputs.l);
+            postMutReal = Math.Round(postMutReal, userInputs.decimalPlaces);
             postMutReals.Add(postMutReal);
-            postMutFs.Add(userInputs.f(postMutReal));
+
+            double postMutF = userInputs.f(postMutReal);
+            postMutF = Math.Round(postMutF, userInputs.decimalPlaces);
+            postMutFs.Add(postMutF);
+
         }
         return new MutationResults
         {

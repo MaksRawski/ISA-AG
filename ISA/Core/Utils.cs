@@ -4,8 +4,10 @@ namespace Core;
 
 public struct UserInputs
 {
+    public bool elitism;
     public double a, b, d, pk, pm;
-    public int decimalPlaces, N, l;
+    public int decimalPlaces, l;
+    public int N, T;
     public FunctionGoal functionGoal;
     public Func<double, double> f;
 }
@@ -19,26 +21,10 @@ public class TableRow
 {
     public int Lp { get; set; }
     public double XReal { get; set; }
+    public string? XBin { get; set; }
     public double Fx { get; set; }
-    public double Gx { get; set; }
-    public double P { get; set; }
-    public double Q { get; set; }
-    public double R { get; set; }
-    public double XCrossReal { get; set; }
-    public string? XCrossBin { get; set; }
-    public string? ParentFirstPart { get; set; }
-    public string? ParentSecondPart { get; set; }
-    public string? ParentColor { get; set; }
-    public string? Pc { get; set; }
-    public string? ChildFirstPart { get; set; }
-    public string? ChildSecondPart { get; set; }
-    public string? ChildFirstColor { get; set; }
-    public string? ChildSecondColor { get; set; }
-    public string? PopulationPostCross { get; set; }
-    public string? MutPoint { get; set; }
-    public string? PostMutBin { get; set; }
-    public double PostMutReal { get; set; }
-    public double PostMutFx { get; set; }
+    public double Percent { get; set; }
+   
 }
 
 public class Utils
