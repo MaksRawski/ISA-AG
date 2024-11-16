@@ -51,9 +51,9 @@ public class Utils
     {
         return Int2Bin(Real2Int(x, a, b, l), l);
     }
-    public static double Bin2Real(string x, double a, double b, int l)
+    public static double Bin2Real(string x, double a, double b, int l, int decimalPlaces)
     {
-        return Int2Real(Bin2Int(x), a, b, l);
+        return Math.Round(Int2Real(Bin2Int(x), a, b, l), decimalPlaces);
     }
     private static double Gmax(Func<double, double> f, double x, double fMin, double d)
     {
