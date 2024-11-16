@@ -3,29 +3,6 @@ public struct Population
 {
     public List<double> xs, fs;
 }
-
-public struct SelectionResults
-{
-    public List<double> gs, ps, qs, rs, xReals;
-    public List<string> xBins;
-}
-
-public struct CrossoverResults
-{
-    public List<bool> parents;
-    public List<string?> children;
-    public List<List<int>?> cuttingPoints;
-    public List<string> populationBin;
-    public int numOfParents;
-}
-
-public struct MutationResults
-{
-    public List<int?> mutationPoints;
-    public List<string> xBins;
-    public Population population;
-}
-
 public class Algorithm
 {
     Random rand = new();
@@ -50,13 +27,9 @@ public class Algorithm
                     .First()
                 : default;
 
-            SelectionResults selection = Select(userInputs, population.xs, fExtreme);
-
-            CrossoverResults crossover = Crossover(userInputs, selection);
-
-            MutationResults mutation = Mutate(userInputs, crossover.populationBin);
-
-            population = mutation.population;
+            List<string> xBins = Select(userInputs, population.xs, fExtreme);
+            xBins = Crossover(userInputs, xBins);
+            population = Mutate(userInputs, xBins);
 
             if (userInputs.elitism && !population.xs.Contains(elite.x))
             {
@@ -127,7 +100,7 @@ public class Algorithm
         };
     }
     
-    public SelectionResults Select(in UserInputs userInputs, List<double> xs, double fExtreme)
+    public List<string> Select(in UserInputs userInputs, List<double> xs, double fExtreme)
     {
         List<double> gs = new();
         double gsSum = 0;
@@ -166,18 +139,10 @@ public class Algorithm
             xBins.Add(xPreCrossBin);
         }
 
-        return new SelectionResults
-        {
-            gs = gs,
-            ps = ps,
-            qs = qs,
-            rs = rs,
-            xReals = xReals,
-            xBins = xBins
-        };
+        return xBins;
     }
 
-    public CrossoverResults Crossover(in UserInputs userInputs, in SelectionResults select)
+    public List<string> Crossover(in UserInputs userInputs, in List<string> xBins)
     {
         // find number of parents
         List<bool> parents = new();
@@ -219,13 +184,13 @@ public class Algorithm
                 }
                 else
                 {
-                    string R1 = select.xBins[i];
+                    string R1 = xBins[i];
 
                     // find a match <3
                     int R2Index = (i + 1) % userInputs.N;
                     while (!parents[R2Index]) { R2Index = (R2Index + 1) % userInputs.N; }
 
-                    string R2 = select.xBins[R2Index];
+                    string R2 = xBins[R2Index];
 
                     // cross chromosomes
                     cuttingPoint = rand.Next(1, userInputs.l);
@@ -255,64 +220,49 @@ public class Algorithm
             children.Add(child);
         }
 
-        List<string> populationBin = new List<string>();
+        List<string> populationBin = new();
         for (int i = 0; i < userInputs.N; i++)
         {
             // parents die and children end up in their place
             if (parents[i]) populationBin.Add(children[i]!);
-            else populationBin.Add(select.xBins[i]);
+            else populationBin.Add(xBins[i]);
         }
 
-        return new CrossoverResults
-        {
-            children = children,
-            cuttingPoints = cuttingPoints,
-            parents = parents,
-            populationBin = populationBin,
-            numOfParents = numOfParents
-        };
+        return populationBin;
     }
 
-    public MutationResults Mutate(in UserInputs userInputs, List<string> popPostCross)
+    public Population Mutate(in UserInputs userInputs, List<string> xBins)
     {
-        List<int?> mutationPoints = new();
-        List<string> postMutBins = new();
-        List<double> postMutReals = new();
-        List<double> postMutFs = new();
+        List<double> xs = new();
+        List<double> fs = new();
+        List<double> rands = new(userInputs.l);
 
         for (int i = 0; i < userInputs.N; i++)
         {
-            double r = rand.NextDouble();
-            int? mutPoint = null;
-            if (r <= userInputs.pm)
-            {
-                mutPoint = rand.Next(0, userInputs.l);
-            }
-            mutationPoints.Add(mutPoint + 1);
+            string xBin = xBins[i];
+            char[] genes = xBin.ToCharArray();
 
-            string postMutBin = popPostCross[i];
-            if (mutPoint is not null)
+            for (int g = 0; g < userInputs.l; g++)
             {
-                char[] chars = postMutBin.ToCharArray();
-                chars[mutPoint.Value] = chars[mutPoint.Value] == '0' ? '1' : '0';
-                postMutBin = new string(chars);
+                double r = rand.NextDouble();
+                rands.Add(r);
+                if (r <= userInputs.pm)
+                {
+                    genes[g] = genes[g] == '0' ? '1' : '0';
+                }
             }
-            postMutBins.Add(postMutBin);
+            xBin = new string(genes);
+
+            double x = Utils.Bin2Real(xBin, userInputs.a, userInputs.b, userInputs.l, userInputs.decimalPlaces);
+            double f = userInputs.f(x);
             
-            double postMutReal = Utils.Bin2Real(postMutBin, userInputs.a, userInputs.b, userInputs.l);
-            postMutReal = Math.Round(postMutReal, userInputs.decimalPlaces);
-            postMutReals.Add(postMutReal);
-
-            double postMutF = userInputs.f(postMutReal);
-            postMutF = Math.Round(postMutF, userInputs.decimalPlaces);
-            postMutFs.Add(postMutF);
-
+            x = Math.Round(x, userInputs.decimalPlaces);
+            f = Math.Round(f, userInputs.decimalPlaces);
+            
+            xs.Add(x);
+            fs.Add(f);
         }
-        return new MutationResults
-        {
-            mutationPoints = mutationPoints,
-            xBins = postMutBins,
-            population = new Population { xs = postMutReals, fs = postMutFs }
-        };
+
+        return new Population { xs = xs, fs = fs };
     }
 }

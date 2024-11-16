@@ -18,9 +18,7 @@ namespace Benchmarks
 
         public readonly Population population;
         public readonly List<double> popXs;
-        public readonly List<string> popBin;
-        public readonly SelectionResults selectionResults;
-        public readonly CrossoverResults crossoverResults;
+        public readonly List<string> popXbins;
 
         public Algo() { 
             algo = new Algorithm();
@@ -63,30 +61,28 @@ namespace Benchmarks
 
             // init some results to use as inputs for later calls
             population = algo.GeneratePopulation(userInputsEz, out fExtreme);
-            selectionResults = algo.Select(userInputsEz, population.xs, fExtreme);
-            crossoverResults = algo.Crossover(userInputsEz, selectionResults);
-            algo.Mutate(userInputsEz, crossoverResults.populationBin);
-            popXs = population.xs;
-            popBin = crossoverResults.populationBin;
+            popXbins = algo.Select(userInputsEz, population.xs, fExtreme);
+            popXbins = algo.Crossover(userInputsEz, popXbins);
+            popXs = algo.Mutate(userInputsEz, popXbins).xs;
         }
 
         [Benchmark]
         public Population GeneratePopulation() => algo.GeneratePopulation(userInputsEz, out double _);
 
         [Benchmark]
-        public SelectionResults Select() => algo.Select(userInputsEz, popXs, fExtreme);
+        public List<string> Select() => algo.Select(userInputsEz, popXs, fExtreme);
 
         [Benchmark]
-        public CrossoverResults Crossover() => algo.Crossover(userInputsEz, selectionResults);
+        public List<string> Crossover() => algo.Crossover(userInputsEz, popXbins);
 
         [Benchmark]
-        public MutationResults Mutation() => algo.Mutate(userInputsEz, popBin);
+        public Population Mutation() => algo.Mutate(userInputsEz, popXbins);
 
-        [Benchmark]
-        public void RunEz() => algo.Run(userInputsEz, out var rows);
+        //[Benchmark]
+        //public void RunEz() => algo.Run(userInputsEz, out var rows);
         
-        [Benchmark]
-        public void RunExtreme() => algo.Run(userInputsExtreme, out var rows);
+        //[Benchmark]
+        //public void RunExtreme() => algo.Run(userInputsExtreme, out var rows);
     }
 
     public class Program
