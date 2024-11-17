@@ -83,7 +83,7 @@ public readonly struct GenotypeSpace
     // it must be such that rounding errors don't yet occur at that precision
 
     /// <summary>
-    /// Creates a 'genotypeSpace' instance using step size 'd'. 
+    /// Creates a <see cref="GenotypeSpace"/> instance using step size 'd'. 
     /// </summary>
     /// <param name="d">Step size e.g. 0.001.</param>
     /// <param name="a">The lower (inclusive) boundary of the range.</param>
@@ -99,7 +99,7 @@ public readonly struct GenotypeSpace
     }
 
     /// <summary>
-    /// Creates a 'genotypeSpace' instance using 'decimalPlaces'. 
+    /// Creates a <see cref="GenotypeSpace"/> instance using 'decimalPlaces'. 
     /// </summary>
     /// <param name="decimalPlaces">Decimal places to be used for rounding the real number representation.</param>
     /// <param name="a">The lower (inclusive) boundary of the range.</param>
@@ -115,9 +115,9 @@ public readonly struct GenotypeSpace
     }
 
     /// <summary>
-    /// Creates a 'genotypeSpace' instance using genotype length 'l'. 
+    /// Creates a <see cref="GenotypeSpace"/> instance using genotype length 'l'. 
     /// </summary>
-    /// <param name="l">genotype length - number of bits the binary representation needs.</param>
+    /// <param name="l">Genotype length - number of bits the binary representation needs.</param>
     /// <param name="a">The lower (inclusive) boundary of the range.</param>
     /// <param name="b">The upper (inclusive) boundary of the range.</param>
     /// <returns>A genotypeSpace instance with all the fields.</returns>
@@ -166,7 +166,7 @@ public class Utils
         return (int)Math.Round( (x - space.a) / (space.b - space.a) * (Math.Pow(2, space.precision.l) - 1) );
     }
     /// <summary>
-    /// Converts a Real representation of a genotype to Binary within the <see cref="GenotypeSpace"/> space.
+    /// Converts a Real representation of a genotype to Binary within the <see cref="GenotypeSpace"/>.
     /// </summary>
     /// <param name="x">Real number representation of the genotype.</param>
     /// <param name="space">A <see cref="GenotypeSpace"/> within which to change the representation.</param>
@@ -176,7 +176,7 @@ public class Utils
         return Int2Bin(Real2Int(x, space), space.precision.l);
     }
     /// <summary>
-    /// Converts a Binary representation of a genotype to a Real number within the <see cref="GenotypeSpace"/> space.
+    /// Converts a Binary representation of a genotype to a Real number within the <see cref="GenotypeSpace"/>.
     /// </summary>
     /// <param name="x">Binary representation of the genotype.</param>
     /// <param name="space">A <see cref="GenotypeSpace"/> within which to change the representation.</param>
