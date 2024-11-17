@@ -20,14 +20,14 @@ namespace Benchmarks
         public Algo()
         {
             double a = -4, b = -12;
-            GenomeSpace space = GenomeSpace.FromDecimalPlaces(3, a, b);
+            GenotypeSpace space = GenotypeSpace.FromDecimalPlaces(3, a, b);
 
             License.iConfirmNonCommercialUse("John Doe");
             var f = Utils.ParseFunction("mod(x,1) * (cos(20*pi*x) - sin(x))");
 
             var inputs = new UserInputs
             {
-                genomeSpace = space,
+                genotypeSpace = space,
                 elitism = true,
                 pk = 0.75,
                 pm = 0.002,

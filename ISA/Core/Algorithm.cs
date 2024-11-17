@@ -1,7 +1,7 @@
 ﻿namespace Core;
 
 /// <summary>
-/// Population stores genomes of all members as well as their values of goal function.
+/// Population stores genotypes of all members as well as their values of goal function.
 /// </summary>
 public struct Population
 {
@@ -81,10 +81,10 @@ public class Algorithm
         foreach (TableRow row in rows)
         {
             row.Lp = lp++;
-            row.XReal = GenomeSpaceRound(row.XReal);
-            row.Fx = GenomeSpaceRound(row.Fx);
-            row.XBin = Utils.Real2Bin(row.XReal, _inputs.genomeSpace);
-            row.Percent = GenomeSpaceRound(row.Percent * 100);
+            row.XReal = genotypeSpaceRound(row.XReal);
+            row.Fx = genotypeSpaceRound(row.Fx);
+            row.XBin = Utils.Real2Bin(row.XReal, _inputs.genotypeSpace);
+            row.Percent = genotypeSpaceRound(row.Percent * 100);
         }
     }
     public Population GeneratePopulation(out double fExtreme)
@@ -95,10 +95,10 @@ public class Algorithm
 
         for (int i = 0; i < _inputs.N; i++)
         {
-            double xReal = _inputs.genomeSpace.a + (_inputs.genomeSpace.b - _inputs.genomeSpace.a) * _rand.NextDouble();
-            xReal = GenomeSpaceRound(xReal);
+            double xReal = _inputs.genotypeSpace.a + (_inputs.genotypeSpace.b - _inputs.genotypeSpace.a) * _rand.NextDouble();
+            xReal = genotypeSpaceRound(xReal);
             double fx = _inputs.f(xReal);
-            fx = GenomeSpaceRound(fx);
+            fx = genotypeSpaceRound(fx);
 
             // max: g(x) = f(x) - fmin + d
             // min: g(x) = -(f(x) - fmax) + d
@@ -123,7 +123,7 @@ public class Algorithm
 
         for (int i = 0; i < _inputs.N; i++)
         {
-            double gx = Utils.G(_inputs.f, xs[i], _inputs.functionGoal, fExtreme, _inputs.genomeSpace.precision.d);
+            double gx = Utils.G(_inputs.f, xs[i], _inputs.functionGoal, fExtreme, _inputs.genotypeSpace.precision.d);
             gsSum += gx;
             gs.Add(gx);
         }
@@ -149,7 +149,7 @@ public class Algorithm
             double r = _rand.NextDouble();
             int xCrossIndex = Utils.GetCDFIndex(r, qs);
             double xPreCrossReal = xs[xCrossIndex];
-            string xPreCrossBin = Utils.Real2Bin(xPreCrossReal, _inputs.genomeSpace);
+            string xPreCrossBin = Utils.Real2Bin(xPreCrossReal, _inputs.genotypeSpace);
             rs.Add(r);
             xReals.Add(xPreCrossReal);
             xBins.Add(xPreCrossBin);
@@ -209,7 +209,7 @@ public class Algorithm
                     string R2 = xBins[R2Index];
 
                     // cross chromosomes
-                    cuttingPoint = _rand.Next(1, _inputs.genomeSpace.precision.l);
+                    cuttingPoint = _rand.Next(1, _inputs.genotypeSpace.precision.l);
                     child = R1[..(int)cuttingPoint] + R2[(int)cuttingPoint..];
                     secondChild = R2[..(int)cuttingPoint] + R1[(int)cuttingPoint..];
 
@@ -251,14 +251,14 @@ public class Algorithm
     {
         List<double> xs = new(_inputs.N);
         List<double> fs = new(_inputs.N);
-        List<double> rands = new(_inputs.genomeSpace.precision.l);
+        List<double> rands = new(_inputs.genotypeSpace.precision.l);
 
         for (int i = 0; i < _inputs.N; i++)
         {
             string xBin = xBins[i];
             char[] genes = xBin.ToCharArray();
 
-            for (int g = 0; g < _inputs.genomeSpace.precision.l; g++)
+            for (int g = 0; g < _inputs.genotypeSpace.precision.l; g++)
             {
                 double r = _rand.NextDouble();
                 rands.Add(r);
@@ -269,11 +269,11 @@ public class Algorithm
             }
             xBin = new string(genes);
 
-            double x = Utils.Bin2Real(xBin, _inputs.genomeSpace);
+            double x = Utils.Bin2Real(xBin, _inputs.genotypeSpace);
             double f = _inputs.f(x);
             
-            x = GenomeSpaceRound(x);
-            f = GenomeSpaceRound(f);
+            x = genotypeSpaceRound(x);
+            f = genotypeSpaceRound(f);
             
             xs.Add(x);
             fs.Add(f);
@@ -282,12 +282,12 @@ public class Algorithm
         return new Population { xs = xs, fs = fs };
     }
     /// <summary>
-    /// Rounds a real number with precision specified in an instance member '_inputs.genomeSpace'.
+    /// Rounds a real number with precision specified in an instance member '_inputs.genotypeSpace'.
     /// </summary>
     /// <param name="x">Number to round.</param>
     /// <returns>Rounded number.</returns>
-    private double GenomeSpaceRound(double x)
+    private double genotypeSpaceRound(double x)
     {
-        return Math.Round(x, _inputs.genomeSpace.precision.decimalPlaces);
+        return Math.Round(x, _inputs.genotypeSpace.precision.decimalPlaces);
     }
 }

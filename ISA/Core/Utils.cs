@@ -4,7 +4,7 @@ namespace Core;
 
 public struct UserInputs
 {
-    public GenomeSpace genomeSpace;
+    public GenotypeSpace genotypeSpace;
     public int N, T;
     public double pk, pm;
     public bool elitism;
@@ -17,10 +17,10 @@ public struct UserInputs
 // so it has tons of comments to explain why it's like that
 
 /// <summary>
-/// The space of all the possible genomes described by an inclusive range 
+/// The space of all the possible genotypes described by an inclusive range 
 /// [<see cref="a"/>, <see cref="b"/>] and a <see cref="Precision"/>.
 /// </summary>
-public readonly struct GenomeSpace
+public readonly struct GenotypeSpace
 {
     /// <summary>
     /// Lower boundary of the space range (inclusive).
@@ -44,7 +44,7 @@ public readonly struct GenomeSpace
         /// </summary>
         public readonly double d;
         /// <summary>
-        /// Length of the binary representation of the genome.
+        /// Length of the binary representation of the genotype.
         /// </summary>
         public readonly int l;
         /// <summary>
@@ -52,7 +52,7 @@ public readonly struct GenomeSpace
         /// </summary>
         public readonly int decimalPlaces;
 
-        /// Internal constructor needed for the factory inside <see cref="GenomeSpace"/> to be working.
+        /// Internal constructor needed for the factory inside <see cref="GenotypeSpace"/> to be working.
         internal Precision(double d, int l, int decimalPlaces)
         {
             this.d = d;
@@ -66,10 +66,14 @@ public readonly struct GenomeSpace
     /// </summary>
     public readonly Precision precision;
 
-    /// Private constructor needed for the entire <see cref="GenomeSpace"/> factory to be working.
-    private GenomeSpace(double a, double b, Precision precision)
+    /// Private constructor needed for the entire <see cref="GenotypeSpace"/> factory to be working.
+    private GenotypeSpace(double a, double b, Precision precision)
     {
-        // TODO: check if with this parameters we can have rounding errors
+        // Biggest value that can be stored in a 32-bit signed int is 2^31-1 so a genotype
+        // of length greater than 31 bits would allow for genotypes to be bigger than 2^31 which would
+        // cause e.g. Big2Int to overflow.
+        if (precision.l > 31) throw new ArgumentException($"Requested too high precision! l={precision.l}>31, decimalPlaces={precision.decimalPlaces}"); 
+
         this.a = a;
         this.b = b;
         this.precision = precision;
@@ -79,53 +83,52 @@ public readonly struct GenomeSpace
     // it must be such that rounding errors don't yet occur at that precision
 
     /// <summary>
-    /// Creates a 'GenomeSpace' instance using step size 'd'. 
+    /// Creates a 'genotypeSpace' instance using step size 'd'. 
     /// </summary>
     /// <param name="d">Step size e.g. 0.001.</param>
     /// <param name="a">The lower (inclusive) boundary of the range.</param>
     /// <param name="b">The upper (inclusive) boundary of the range.</param>
-    /// <returns>A GenomeSpace instance with all the fields.</returns>
-    public static GenomeSpace FromD(double d, double a, double b)
+    /// <returns>A genotypeSpace instance with all the fields.</returns>
+    public static GenotypeSpace FromD(double d, double a, double b)
     {
         int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
         int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
         Precision precision = new(d, l, decimalPlaces);
 
-        return new GenomeSpace(a, b, precision);
+        return new GenotypeSpace(a, b, precision);
     }
 
     /// <summary>
-    /// Creates a 'GenomeSpace' instance using 'decimalPlaces'. 
+    /// Creates a 'genotypeSpace' instance using 'decimalPlaces'. 
     /// </summary>
     /// <param name="decimalPlaces">Decimal places to be used for rounding the real number representation.</param>
     /// <param name="a">The lower (inclusive) boundary of the range.</param>
     /// <param name="b">The upper (inclusive) boundary of the range.</param>
-    /// <returns>A GenomeSpace instance with all the fields.</returns>
-    public static GenomeSpace FromDecimalPlaces(int decimalPlaces, double a, double b)
+    /// <returns>A genotypeSpace instance with all the fields.</returns>
+    public static GenotypeSpace FromDecimalPlaces(int decimalPlaces, double a, double b)
     {
         double d = Math.Pow(10, -decimalPlaces);
         int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
         Precision precision = new(d, l, decimalPlaces);
 
-        return new GenomeSpace(a, b, precision);
+        return new GenotypeSpace(a, b, precision);
     }
 
-    ///// <summary>
-    ///// Creates a 'GenomeSpace' instance using genome length 'l'. 
-    ///// </summary>
-    ///// <param name="l">Genome length - number of bits the binary representation needs.</param>
-    ///// <param name="a">The lower (inclusive) boundary of the range.</param>
-    ///// <param name="b">The upper (inclusive) boundary of the range.</param>
-    ///// <returns>A GenomeSpace instance with all the fields.</returns>
-    //public static GenomeSpace FromL(int l, double a, double b)
-    //{
-    //    // l = ceil( log2((b-a)/d + 1) )
-    //    double d = ??
-    //    int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
-    //    Precision precision = new(d, l, decimalPlaces);
-    //
-    //    return new GenomeSpace(d, l, decimalPlaces);
-    //}
+    /// <summary>
+    /// Creates a 'genotypeSpace' instance using genotype length 'l'. 
+    /// </summary>
+    /// <param name="l">genotype length - number of bits the binary representation needs.</param>
+    /// <param name="a">The lower (inclusive) boundary of the range.</param>
+    /// <param name="b">The upper (inclusive) boundary of the range.</param>
+    /// <returns>A genotypeSpace instance with all the fields.</returns>
+    public static GenotypeSpace FromL(int l, double a, double b)
+    {
+        double d = (b - a) / (Math.Pow(2, l) - 1);
+        int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
+        Precision precision = new(d, l, decimalPlaces);
+
+        return new GenotypeSpace(a, b, precision);
+    }
 }
 
 public enum FunctionGoal
@@ -154,31 +157,31 @@ public class Utils
         return Convert.ToString(x, 2).PadLeft(l, '0');
     }
 
-    public static double Int2Real(int x, GenomeSpace space)
+    public static double Int2Real(int x, GenotypeSpace space)
     {
         return x * (space.b - space.a) / (Math.Pow(2, space.precision.l) - 1) + space.a;
     }
-    public static int Real2Int(double x, GenomeSpace space)
+    public static int Real2Int(double x, GenotypeSpace space)
     {
         return (int)Math.Round( (x - space.a) / (space.b - space.a) * (Math.Pow(2, space.precision.l) - 1) );
     }
     /// <summary>
-    /// Converts a Real representation of a genome to Binary within the <see cref="GenomeSpace"/> space.
+    /// Converts a Real representation of a genotype to Binary within the <see cref="GenotypeSpace"/> space.
     /// </summary>
-    /// <param name="x">Real number representation of the genome.</param>
-    /// <param name="space">A <see cref="GenomeSpace"/> within which to change the representation.</param>
-    /// <returns>A real number representation of the genome.</returns>
-    public static string Real2Bin(double x, GenomeSpace space)
+    /// <param name="x">Real number representation of the genotype.</param>
+    /// <param name="space">A <see cref="GenotypeSpace"/> within which to change the representation.</param>
+    /// <returns>A real number representation of the genotype.</returns>
+    public static string Real2Bin(double x, GenotypeSpace space)
     {
         return Int2Bin(Real2Int(x, space), space.precision.l);
     }
     /// <summary>
-    /// Converts a Binary representation of a genome to a Real number within the <see cref="GenomeSpace"/> space.
+    /// Converts a Binary representation of a genotype to a Real number within the <see cref="GenotypeSpace"/> space.
     /// </summary>
-    /// <param name="x">Binary representation of the genome.</param>
-    /// <param name="space">A <see cref="GenomeSpace"/> within which to change the representation.</param>
-    /// <returns>A real number representation of the genome.</returns>
-    public static double Bin2Real(string x, GenomeSpace space)
+    /// <param name="x">Binary representation of the genotype.</param>
+    /// <param name="space">A <see cref="GenotypeSpace"/> within which to change the representation.</param>
+    /// <returns>A real number representation of the genotype.</returns>
+    public static double Bin2Real(string x, GenotypeSpace space)
     {
         return Math.Round(Int2Real(Bin2Int(x), space), space.precision.decimalPlaces);
     }
