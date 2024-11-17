@@ -163,7 +163,7 @@ public class Utils
     }
     public static int Real2Int(double x, GenotypeSpace space)
     {
-        return (int)Math.Round( (x - space.a) / (space.b - space.a) * (Math.Pow(2, space.precision.l) - 1) );
+        return (int)Math.Round((x - space.a) / (space.b - space.a) * (Math.Pow(2, space.precision.l) - 1));
     }
     /// <summary>
     /// Converts a Real representation of a genotype to Binary within the <see cref="GenotypeSpace"/>.
@@ -183,7 +183,7 @@ public class Utils
     /// <returns>A real number representation of the genotype.</returns>
     public static double Bin2Real(string x, GenotypeSpace space)
     {
-        return Math.Round(Int2Real(Bin2Int(x), space), space.precision.decimalPlaces);
+        return Int2Real(Bin2Int(x), space);
     }
     private static double Gmax(Func<double, double> f, double x, double fMin, double d)
     {
