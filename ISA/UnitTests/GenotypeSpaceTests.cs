@@ -1,63 +1,87 @@
 ﻿using Core;
+using System.Numerics;
 
 namespace UnitTests
 {
+    // Precision is always determined by a number of decimal places and since you
+    // can't provide a wrong number of decimal places (though it must be positive and not /too/ big)
+    // that's why all test procedures will take only it and generate the other two
+    // precision parameters d and l from it.
     [TestClass()]
     public class GenotypeSpaceTests
     {
         [DataTestMethod]
-        [DataRow(0, 1, 0, 0, 0)]
-        [DataRow(0, 1, 0, 1, 0)]
-        [DataRow(0, 1, 0, 10, 1)]
-        [DataRow(0, 1, 0, 16, 1)]
-        [DataRow(0, 1, 0, 20, 1)]
-        public void Real2Int(double a, double b, double x, int decimalPlaces, int expected)
+        [DataRow(0, 1, 0)]
+        [DataRow(0, 1, 3)]
+        [DataRow(0, 1, 8)]
+        [DataRow(-2, 3, 3)] 
+        [DataRow(-4, 12, 4)] 
+        [DataRow(-4, 12, 6)] 
+        public void FromD(double a, double b, int decimalPlaces)
         {
-            GenotypeSpace space = GenotypeSpace.FromDecimalPlaces(decimalPlaces, a, b);
-            int result = Utils.Real2Int(x, space);
-            Assert.AreEqual(expected, result, $"Failed with x={x} in [{a}, {b}], decimalPlaces={decimalPlaces}");
+            double d = Math.Pow(10, -decimalPlaces);
+            GenotypeSpace spaceFromD = GenotypeSpace.FromD(d, a, b);
+
+            // This is the most obvious way of calculating the other parameters.
+            int numberOfSolutions = (int)(b - a) * (int)Math.Pow(10, decimalPlaces) + 1;
+            int storedNumberOfSolutions = (int)BitOperations.RoundUpToPowerOf2((uint)numberOfSolutions);
+
+            int l = (int)Math.Log2(storedNumberOfSolutions);
+
+            Assert.AreEqual(decimalPlaces, spaceFromD.precision.decimalPlaces, 
+                $"Wrong decimalPlaces in [{a}, {b}] with d={d}");
+
+            Assert.AreEqual(l, spaceFromD.precision.l, $"Wrong l in [{a}, {b}], with d={d}");
         }
 
         [DataTestMethod]
-        [DataRow(0, 1, "0", 0)]
-        [DataRow(0, 1, "1", 1)]
-        [DataRow(0, 1, "0000000000000000000000000000000", 0)]
-        [DataRow(0, 1, "0000000000000000000000000000001", 1)]
-        [DataRow(0, 1, "0000000010000110000100010110011", 4393139)]
-        [DataRow(0, 1, "0010010101110011011000010100001", 314159265)]
-        [DataRow(0, 1, "1111111111111111111111111111111", 2147483647)] // 2^31 - 1
-        public void Bin2Int(double a, double b, string x, int expected)
+        [DataRow(0, 1, 0)]
+        [DataRow(0, 1, 3)]
+        [DataRow(0, 1, 8)]
+        [DataRow(-2, 3, 3)]
+        [DataRow(-4, 12, 4)]
+        [DataRow(-4, 12, 6)]
+        [DataRow(-4, 4, 3)]
+        public void FromL(double a, double b, int decimalPlaces)
         {
-            int l = x.Length;
-            GenotypeSpace space = GenotypeSpace.FromDecimalPlaces(424242424, a, b); // random number as there is no rounding
-            int result = Utils.Bin2Int(x);
-            Assert.AreEqual(expected, result, $"Failed with x={x} ({l} bits) in [{a}, {b}]");
+            // This is the most obvious way of calculating l.
+            int numberOfSolutions = (int)(b - a) * (int)Math.Pow(10, decimalPlaces) + 1;
+            int storedNumberOfSolutions = (int)BitOperations.RoundUpToPowerOf2((uint)numberOfSolutions);
+            int l = (int)Math.Log2(storedNumberOfSolutions);
+
+            GenotypeSpace spaceFromL = GenotypeSpace.FromL(l, a, b);
+
+            double d = Math.Pow(10, -decimalPlaces);
+
+            Assert.AreEqual(d, spaceFromL.precision.d, $"Wrong d in [{a}, {b}] with " +
+                $"l={l}.");
+
+            Assert.AreEqual(decimalPlaces, spaceFromL.precision.decimalPlaces,
+                $"Wrong decimalPlaces in [{a}, {b}] with l={l}");
         }
 
         [DataTestMethod]
-        [DataRow(0, 1, 0.1, 1)]
-        [DataRow(0, 1, 0.1, 2)]
-        [DataRow(0, 1, 0.1, 6)]
-        [DataRow(0, 1, 0.1, 8)]
-        [DataRow(0, 1, 0.1, 10)]
-        [DataRow(0, 1, 0.1, 12)]
-        [DataRow(0, 1, 0.1, 14)]
-        [DataRow(0, 1, 0.1, 16)]
-        [DataRow(1.1, 1)]
-        [DataRow(1.1, 2)]
-        [DataRow(1.1, 6)]
-        [DataRow(1.1, 8)]
-        [DataRow(1.1, 10)]
-        [DataRow(1.1, 12)]
-        [DataRow(1.1, 14)]
-        [DataRow(1.1, 16)]
-        public void Real2Bin2Real(double a, double b, double real, int decimalPlaces)
+        [DataRow(0, 1, 0)]
+        [DataRow(0, 1, 3)]
+        [DataRow(0, 1, 8)]
+        [DataRow(-2, 3, 3)]
+        [DataRow(-4, 12, 4)]
+        [DataRow(-4, 12, 6)]
+        public void FromDecimalPlaces(double a, double b, int decimalPlaces)
         {
-            GenotypeSpace space = GenotypeSpace.FromDecimalPlaces(decimalPlaces, a, b);
+            GenotypeSpace spaceFromDecimalPlaces = GenotypeSpace.FromDecimalPlaces(decimalPlaces, a, b);
 
-            string bin = Utils.Real2Bin(real, space);
-            Assert.AreEqual(real, Utils.Bin2Real(bin, space), $"Failed with decimalPlaces={decimalPlaces}");
+            // This is the most obvious way of calculating l and d.
+            int numberOfSolutions = (int)(b - a) * (int)Math.Pow(10, decimalPlaces) + 1;
+            int storedNumberOfSolutions = (int)BitOperations.RoundUpToPowerOf2((uint)numberOfSolutions);
+            int l = (int)Math.Log2(storedNumberOfSolutions);
+            double d = Math.Pow(10, -decimalPlaces);
+
+            Assert.AreEqual(l, spaceFromDecimalPlaces.precision.l,
+                $"Wrong l in [{a}, {b}] with {decimalPlaces} decimal places of precision.");
+
+            Assert.AreEqual(d, spaceFromDecimalPlaces.precision.d, $"Wrong d in [{a}, {b}] with " +
+                $"{decimalPlaces} decimal places of precision.");
         }
-
     }
 }

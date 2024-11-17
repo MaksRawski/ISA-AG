@@ -69,18 +69,10 @@ public readonly struct GenotypeSpace
     /// Private constructor needed for the entire <see cref="GenotypeSpace"/> factory to be working.
     private GenotypeSpace(double a, double b, Precision precision)
     {
-        // Biggest value that can be stored in a 32-bit signed int is 2^31-1 so a genotype
-        // of length greater than 31 bits would allow for genotypes to be bigger than 2^31 which would
-        // cause e.g. Big2Int to overflow.
-        if (precision.l > 31) throw new ArgumentException($"Requested too high precision! l={precision.l}>31, decimalPlaces={precision.decimalPlaces}"); 
-
         this.a = a;
         this.b = b;
         this.precision = precision;
     }
-
-    // TODO: add checks whether either d or decimalPlaces is a sane value
-    // it must be such that rounding errors don't yet occur at that precision
 
     /// <summary>
     /// Creates a <see cref="GenotypeSpace"/> instance using step size 'd'. 
@@ -91,6 +83,10 @@ public readonly struct GenotypeSpace
     /// <returns>A genotypeSpace instance with all the fields.</returns>
     public static GenotypeSpace FromD(double d, double a, double b)
     {
+        if (d <= 0 || Math.Pow(10, Math.Log10(d)) != d)
+        {
+            throw new ArgumentException($"Step size must be a fractional power of 10, but given d={d}");
+        }
         int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
         int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
         Precision precision = new(d, l, decimalPlaces);
@@ -107,6 +103,20 @@ public readonly struct GenotypeSpace
     /// <returns>A genotypeSpace instance with all the fields.</returns>
     public static GenotypeSpace FromDecimalPlaces(int decimalPlaces, double a, double b)
     {
+        try
+        {
+            checked
+            {
+                // number of solutions for given parameter set
+                _ = (int)(b - a) * (int)Math.Pow(10, decimalPlaces) + 1;
+            }
+        }
+        catch (OverflowException)
+        {
+            throw new ArgumentException(
+                $"Too many solutions are possible for range [{a}, {b}] with decimal precision of {decimalPlaces}.");
+        }
+
         double d = Math.Pow(10, -decimalPlaces);
         int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
         Precision precision = new(d, l, decimalPlaces);
@@ -115,16 +125,39 @@ public readonly struct GenotypeSpace
     }
 
     /// <summary>
-    /// Creates a <see cref="GenotypeSpace"/> instance using genotype length 'l'. 
+    /// Creates a <see cref="GenotypeSpace"/> instance using genotype length 'l'.
     /// </summary>
-    /// <param name="l">Genotype length - number of bits the binary representation needs.</param>
+    /// <param name="l">Genotype length - number of bits of the binary representation.</param>
     /// <param name="a">The lower (inclusive) boundary of the range.</param>
     /// <param name="b">The upper (inclusive) boundary of the range.</param>
     /// <returns>A genotypeSpace instance with all the fields.</returns>
     public static GenotypeSpace FromL(int l, double a, double b)
     {
-        double d = (b - a) / (Math.Pow(2, l) - 1);
-        int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
+        // Biggest value that can be stored in a 32-bit signed int is 2^31-1 so a genotype
+        // of length greater than 31 bits would allow for genotypes to be bigger than 2^31 which would
+        // cause e.g. Bin2Int to overflow.
+        if (l > 31 || l < 1)
+        {
+            throw new ArgumentException($"Genotype length must be in range [1, 31], asked for l={l}");
+        }
+
+        double numOfValues = Math.Pow(2, l);
+        double d = (b - a) / (numOfValues - 1);
+        if (d > 1)
+        {
+            throw new ArgumentException(
+                $"Range [{a}, {b}] has length which can't be fit into a l={l} bit long number." +
+                $"Trying to fit it would cause some integers to be impossible to represent." +
+                $"Consider providing a bigger l.");
+        }
+
+        // nDecimalPlaces is the exponent in the scientific notation, rounded up to
+        // always choose coarser precision, ensuring that every number can be represented
+        // with the later calculated step size d.
+        int nDecimalPlaces = (int)Math.Ceiling(Math.Log10(d));
+        d = Math.Pow(10, nDecimalPlaces);
+        int decimalPlaces = -nDecimalPlaces;
+
         Precision precision = new(d, l, decimalPlaces);
 
         return new GenotypeSpace(a, b, precision);
