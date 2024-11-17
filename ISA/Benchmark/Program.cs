@@ -11,76 +11,56 @@ namespace Benchmarks
     public class Algo
     {
         private readonly Algorithm algo;
-
         private readonly double fExtreme;
-        private readonly UserInputs userInputsEz;
-        private readonly UserInputs userInputsExtreme;
 
         public readonly Population population;
         public readonly List<double> popXs;
         public readonly List<string> popXbins;
 
-        public Algo() { 
-            algo = new Algorithm();
-            algo.SetSeed(0);
+        public Algo()
+        {
+            double a = -4, b = -12;
+            GenomeSpace space = GenomeSpace.FromDecimalPlaces(3, a, b);
 
             License.iConfirmNonCommercialUse("John Doe");
             var f = Utils.ParseFunction("mod(x,1) * (cos(20*pi*x) - sin(x))");
 
-
-            userInputsEz = new UserInputs
+            var inputs = new UserInputs
             {
-                a = -4,
-                b = 12,
-                d = 0.001,
-                decimalPlaces = 3,
+                genomeSpace = space,
                 elitism = true,
                 pk = 0.75,
                 pm = 0.002,
                 N = 10,
                 T = 50,
-                l = 14,
-                functionGoal = FunctionGoal.Max,
-                f = f,
-            };
-            userInputsExtreme = new UserInputs
-            {
-                a = -4,
-                b = 12,
-                d = 0.001,
-                decimalPlaces = 3,
-                elitism = true,
-                pk = 0.75,
-                pm = 0.002,
-                N = 80,
-                T = 100,
-                l = 14,
                 functionGoal = FunctionGoal.Max,
                 f = f,
             };
 
+            algo = new Algorithm(inputs);
+            
             // init some results to use as inputs for later calls
-            population = algo.GeneratePopulation(userInputsEz, out fExtreme);
-            popXbins = algo.Select(userInputsEz, population.xs, fExtreme);
-            popXbins = algo.Crossover(userInputsEz, popXbins);
-            popXs = algo.Mutate(userInputsEz, popXbins).xs;
+            population = algo.GeneratePopulation(out fExtreme);
+            popXbins = algo.Select(population.xs, fExtreme);
+            popXbins = algo.Crossover(popXbins);
+            popXs = algo.Mutate(popXbins).xs;
         }
 
         [Benchmark]
-        public Population GeneratePopulation() => algo.GeneratePopulation(userInputsEz, out double _);
+        public Population GeneratePopulation() => algo.GeneratePopulation(out double _);
 
         [Benchmark]
-        public List<string> Select() => algo.Select(userInputsEz, popXs, fExtreme);
+        public List<string> Select() => algo.Select(popXs, fExtreme);
 
         [Benchmark]
-        public List<string> Crossover() => algo.Crossover(userInputsEz, popXbins);
+        public List<string> Crossover() => algo.Crossover(popXbins);
 
         [Benchmark]
-        public Population Mutation() => algo.Mutate(userInputsEz, popXbins);
+        public Population Mutation() => algo.Mutate(popXbins);
 
         //[Benchmark]
         //public void RunEz() => algo.Run(userInputsEz, out var rows);
-        
+
         //[Benchmark]
         //public void RunExtreme() => algo.Run(userInputsExtreme, out var rows);
     }

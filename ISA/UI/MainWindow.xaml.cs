@@ -62,11 +62,6 @@ namespace UI
             _ = TryParseDouble(aLineEdit.Text, out double a);
             _ = TryParseDouble(bLineEdit.Text, out double b);
             double d = (double)dComboBox.SelectedItem;
-            int decimalPlaces = (int)Math.Ceiling(-Math.Log10(d));
-            bool elitism = (bool)elitismCheckbox.IsChecked;
-            int N = int.Parse(NLineEdit.Text);
-            int T = int.Parse(TLineEdit.Text);
-            int l = (int)Math.Ceiling(Math.Log2((b - a) / d + 1));
             _ = TryParseDouble(PkLineEdit.Text, out double pk);
             _ = TryParseDouble(PmLineEdit.Text, out double pm);
 
@@ -74,23 +69,19 @@ namespace UI
                 functionGoalComboBox.SelectedIndex == 0 ? FunctionGoal.Max : FunctionGoal.Min;
             Func<double, double> f = Utils.ParseFunction(fLineEdit.Text);
 
-            var userInputs = new UserInputs
+            var inputs = new UserInputs
             {
-                a = a,
-                b = b,
-                d = d,
-                decimalPlaces = decimalPlaces,
-                elitism = elitism,
+                genomeSpace = GenomeSpace.FromD(d, a, b),
+                elitism = (bool)elitismCheckbox.IsChecked!,
                 pk = pk,
                 pm = pm,
-                N = N,
-                T = T,
-                l = l,
+                N = int.Parse(NLineEdit.Text),
+                T = int.Parse(TLineEdit.Text),
                 functionGoal = functionGoal,
                 f = f,
             };
-            var algo = new Algorithm();
-            algo.Run(userInputs, out List<TableRow> rows);
+            var algo = new Algorithm(inputs);
+            algo.Run(out List<TableRow> rows);
             DaneDataGrid.ItemsSource = rows;
 
             double rowHeight = 22;
