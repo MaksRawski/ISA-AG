@@ -9,13 +9,13 @@ namespace AlgorithmTests
         public void MutateTestBasic()
         {
             double a = 0, b = 1;
-            GenotypeSpace space = GenotypeSpace.FromDecimalPlaces(3, a, b);
-
             List<string> xBins = new()
             {
                 "0000000000",
                 "1111111111"
             };
+            GenotypeSpace space = GenotypeSpace.FromL(xBins[0].Length, a, b);
+
 
             UserInputs userInputs = new()
             {
@@ -38,47 +38,40 @@ namespace AlgorithmTests
             CollectionAssert.AreEqual(expected, pop.xs);
         }
 
-        // TODO: for this it would be nice if we had genotypeSpace.FromL
-        //[TestMethod]
-        //public void MutateTestRandom()
-        //{
-        //    double a = 0, b = 1;
-        //    genotypeSpace space = genotypeSpace.FromDecimalPlaces(3, a, b);
+        [DataTestMethod]
+        [DataRow("0000000000", 0.5, 0)]
+        [DataRow("1111111111", 0.5, 0)]
+        [DataRow("0101010101", 0.1, 0)]
+        [DataRow("0000000000", 0.5, 123)]
+        [DataRow("0000000000", 0.1, 123)]
+        public void MutateTestRandom(string x, double pm, int seed)
+        {
+            double a = 0, b = 1;
 
-        //    List<string> xBins = new()
-        //    {
-        //        "0000000000",
-        //    };
+            GenotypeSpace space = GenotypeSpace.FromL(x.Length, a, b);
+            UserInputs inputs = new(space, N: 1, T: 1, pk: 0, pm, elitism: false, f: (x) => x, FunctionGoal.Max);
 
-        //    UserInputs inputs = new()
-        //    {
-        //        genotypeSpace = space,
-        //        N = xBins.Count,
-        //        f = (x) => x,
-        //        pm = 1,
-        //    };
+            // use the same seed for both the test's RNG and the algorithm
+            Random rand = new(seed);
+            var algo = new Algorithm(inputs, seed);
 
-        //    // ten sam seed dla algorytmu i testu
-        //    int seed = 123;
-        //    Random rand = new(seed);
+            // perform the test's mutation
+            List<bool> shouldMutate = new();
+            for (int i = 0; i < space.precision.l; i++)
+            {
+                double r = rand.NextDouble();
+                shouldMutate.Add(r <= inputs.pm);
+            }
 
-        //    // algorytm na tej samej zasadzie powinien decydować o mutacji poszczególnych genów
-        //    List<bool> shouldMutate = new();
-        //    for (int i = 0; i < space.l; i++)
-        //    {
-        //        double r = rand.NextDouble();
-        //        rands.Add(r);
-        //        shouldMutate.Add(r <= inputs.pm);
-        //    }
+            // mutate with the algorithm
+            var mutatedReal = algo.Mutate(new List<string> { x }).xs[0];
+            string mutatedXBin = Utils.Real2Bin(mutatedReal, space);
 
-        //    algo.SetSeed(seed);
-        //    var mutatedReal = algo.Mutate(inputs, xBins).xs[0];
-        //    string mutatedXBin = Utils.Real2Bin(mutatedReal, inputs.a, inputs.b, inputs.l);
-
-        //    for (int i = 0; i < inputs.l; i++)
-        //    {
-        //        Assert.AreEqual(mutatedXBin[i] != xBins[0][i], shouldMutate[i], $"Wrong mutation on {i}th bit with seed={seed}");
-        //    }
-        //}
+            // compare bits
+            for (int i = 0; i < x.Length; i++)
+            {
+                Assert.AreEqual(mutatedXBin[i] != x[i], shouldMutate[i], $"Wrong mutation on {i}th bit with seed={seed}");
+            }
+        }
     }
 }
