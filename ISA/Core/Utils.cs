@@ -10,6 +10,18 @@ public struct UserInputs
     public bool elitism;
     public Func<double, double> f;
     public FunctionGoal functionGoal;
+
+    public UserInputs(GenotypeSpace genotypeSpace, int N, int T, double pk, double pm, bool elitism, Func<double, double> f, FunctionGoal functionGoal)
+    {
+        this.genotypeSpace = genotypeSpace;
+        this.N = N;
+        this.T = T;
+        this.pk = pk;
+        this.pm = pm;
+        this.elitism = elitism;
+        this.f = f;
+        this.functionGoal = functionGoal;
+    }
 }
 
 // the following may seem like quite a monster but it's only just a struct

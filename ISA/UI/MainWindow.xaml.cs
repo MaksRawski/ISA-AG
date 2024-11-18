@@ -69,17 +69,16 @@ namespace UI
                 functionGoalComboBox.SelectedIndex == 0 ? FunctionGoal.Max : FunctionGoal.Min;
             Func<double, double> f = Utils.ParseFunction(fLineEdit.Text);
 
-            var inputs = new UserInputs
-            {
-                genomeSpace = GenomeSpace.FromD(d, a, b),
-                elitism = (bool)elitismCheckbox.IsChecked!,
-                pk = pk,
-                pm = pm,
-                N = int.Parse(NLineEdit.Text),
-                T = int.Parse(TLineEdit.Text),
-                functionGoal = functionGoal,
-                f = f,
-            };
+            var inputs = new UserInputs(
+                GenotypeSpace.FromD(d, a, b),
+                N: int.Parse(NLineEdit.Text),
+                T: int.Parse(TLineEdit.Text),
+                pk,
+                pm,
+                elitism: (bool)elitismCheckbox.IsChecked!,
+                f,
+                functionGoal
+            );
             var algo = new Algorithm(inputs);
             algo.Run(out List<TableRow> rows);
             DaneDataGrid.ItemsSource = rows;
