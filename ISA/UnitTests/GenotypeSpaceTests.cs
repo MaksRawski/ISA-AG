@@ -1,7 +1,7 @@
 ﻿using Core;
 using System.Numerics;
 
-namespace UnitTests
+namespace UtilsTests
 {
     // Precision is always determined by a number of decimal places and since you
     // can't provide a wrong number of decimal places (though it must be positive and not /too/ big)

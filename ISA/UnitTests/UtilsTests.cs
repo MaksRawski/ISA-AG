@@ -1,6 +1,6 @@
 ﻿using Core;
 
-namespace UnitTests
+namespace UtilsTests
 {
     [TestClass()]
     public class UtilsTests
