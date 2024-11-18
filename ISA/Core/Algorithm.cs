@@ -12,11 +12,13 @@ public class Algorithm
     private Random _rand = new();
     private UserInputs _inputs;
 
-    public Algorithm(UserInputs userInputs) { 
+    public Algorithm(UserInputs userInputs)
+    {
         _inputs = userInputs;
         _rand = new Random();
     }
-    public Algorithm(UserInputs userInputs, int seed) {
+    public Algorithm(UserInputs userInputs, int seed)
+    {
         _inputs = userInputs;
         _rand = new Random(seed);
     }
@@ -25,7 +27,7 @@ public class Algorithm
     {
         _rand = new(seed);
     }
-    
+
     public void Run(out List<TableRow> rows)
     {
         var functionGoal = _inputs.functionGoal;
@@ -115,8 +117,8 @@ public class Algorithm
             fs = fs
         };
     }
-    
-    public List<string> Select( List<double> xs, double fExtreme)
+
+    public List<string> Select(List<double> xs, double fExtreme)
     {
         List<double> gs = new();
         double gsSum = 0;
@@ -271,10 +273,10 @@ public class Algorithm
 
             double x = Utils.Bin2Real(xBin, _inputs.genotypeSpace);
             double f = _inputs.f(x);
-            
+
             x = genotypeSpaceRound(x);
             f = genotypeSpaceRound(f);
-            
+
             xs.Add(x);
             fs.Add(f);
         }
