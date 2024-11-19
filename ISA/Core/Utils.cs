@@ -9,9 +9,9 @@ public struct UserInputs
     public double pk, pm;
     public bool elitism;
     public Func<double, double> f;
-    public FunctionGoal functionGoal;
+    public OptimizationGoal optimizationGoal;
 
-    public UserInputs(GenotypeSpace genotypeSpace, int N, int T, double pk, double pm, bool elitism, Func<double, double> f, FunctionGoal functionGoal)
+    public UserInputs(GenotypeSpace genotypeSpace, int N, int T, double pk, double pm, bool elitism, Func<double, double> f, OptimizationGoal functionGoal)
     {
         this.genotypeSpace = genotypeSpace;
         this.N = N;
@@ -20,7 +20,7 @@ public struct UserInputs
         this.pm = pm;
         this.elitism = elitism;
         this.f = f;
-        this.functionGoal = functionGoal;
+        this.optimizationGoal = functionGoal;
     }
 }
 
@@ -81,6 +81,7 @@ public readonly struct GenotypeSpace
     /// Private constructor needed for the entire <see cref="GenotypeSpace"/> factory to be working.
     private GenotypeSpace(double a, double b, Precision precision)
     {
+        if (b < a) throw new ArgumentException($"Tried to create a GenotypeSpace with an invalid range: [{a}, {b}]!");
         this.a = a;
         this.b = b;
         this.precision = precision;
@@ -176,7 +177,7 @@ public readonly struct GenotypeSpace
     }
 }
 
-public enum FunctionGoal
+public enum OptimizationGoal
 {
     Max,
     Min,
@@ -238,9 +239,9 @@ public class Utils
     {
         return -(f(x) - fMax) + d;
     }
-    public static double G(Func<double, double> f, double x, FunctionGoal functionGoal, double fExtreme, double d)
+    public static double G(Func<double, double> f, double x, OptimizationGoal functionGoal, double fExtreme, double d)
     {
-        return functionGoal == FunctionGoal.Max ?
+        return functionGoal == OptimizationGoal.Max ?
             Gmax(f, x, fExtreme, d) : Gmin(f, x, fExtreme, d);
     }
     /// <summary>

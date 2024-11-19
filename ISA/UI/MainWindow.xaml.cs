@@ -65,8 +65,8 @@ namespace UI
             _ = TryParseDouble(PkLineEdit.Text, out double pk);
             _ = TryParseDouble(PmLineEdit.Text, out double pm);
 
-            FunctionGoal functionGoal = 
-                functionGoalComboBox.SelectedIndex == 0 ? FunctionGoal.Max : FunctionGoal.Min;
+            OptimizationGoal functionGoal = 
+                functionGoalComboBox.SelectedIndex == 0 ? OptimizationGoal.Max : OptimizationGoal.Min;
             Func<double, double> f = Utils.ParseFunction(fLineEdit.Text);
 
             var inputs = new UserInputs(

@@ -1,4 +1,6 @@
-﻿namespace Core;
+﻿using System.Transactions;
+
+namespace Core;
 
 /// <summary>
 /// Population stores genotypes of all members as well as their values of goal function.
@@ -10,17 +12,20 @@ public struct Population
 public class Algorithm
 {
     private Random _rand = new();
-    private UserInputs _inputs;
+    private readonly UserInputs _inputs;
+    public double fExtremeOppositeOfGoal { get; set; }
 
     public Algorithm(UserInputs userInputs)
     {
         _inputs = userInputs;
         _rand = new Random();
+        fExtremeOppositeOfGoal = _inputs.optimizationGoal == OptimizationGoal.Max ? double.MaxValue : double.MinValue;
     }
     public Algorithm(UserInputs userInputs, int seed)
     {
         _inputs = userInputs;
         _rand = new Random(seed);
+        fExtremeOppositeOfGoal = _inputs.optimizationGoal == OptimizationGoal.Max ? double.MaxValue : double.MinValue;
     }
 
     public void SetSeed(int seed)
@@ -30,8 +35,8 @@ public class Algorithm
 
     public void Run(out List<TableRow> rows)
     {
-        var functionGoal = _inputs.functionGoal;
-        Population population = GeneratePopulation(out double fExtreme);
+        var functionGoal = _inputs.optimizationGoal;
+        var population = GeneratePopulation();
 
         // perform GA for T generations
         for (int i = 0; i < _inputs.T; i++)
@@ -40,11 +45,11 @@ public class Algorithm
             var elite = _inputs.elitism ?
                 population.xs
                     .Zip(population.fs, (x, f) => (x, f))
-                    .OrderBy(pair => functionGoal == FunctionGoal.Max ? -pair.f : pair.f)
+                    .OrderBy(pair => functionGoal == OptimizationGoal.Max ? -pair.f : pair.f)
                     .First()
                 : default;
 
-            List<string> xBins = Select(population.xs, fExtreme);
+            List<string> xBins = Select(population.xs);
             xBins = Crossover(xBins);
             population = Mutate(xBins);
 
@@ -72,7 +77,7 @@ public class Algorithm
                 Percent = (double)group.Count() / populationSize
             });
 
-        rows = (_inputs.functionGoal == FunctionGoal.Max
+        rows = (_inputs.optimizationGoal == OptimizationGoal.Max
             ? groupedRows.OrderByDescending(row => row.Fx)
             : groupedRows.OrderBy(row => row.Fx))
             .ToList();
@@ -89,9 +94,13 @@ public class Algorithm
             row.Percent = genotypeSpaceRound(row.Percent * 100);
         }
     }
-    public Population GeneratePopulation(out double fExtreme)
+
+    /// <summary>
+    /// Generates a <see cref="Population"/> (genotypes and goal function values at given points).
+    /// Also sets fExtreme.
+    /// </summary>
+    public Population GeneratePopulation()
     {
-        fExtreme = _inputs.functionGoal == FunctionGoal.Max ? double.MaxValue : double.MinValue;
         List<double> xs = new();
         List<double> fs = new();
 
@@ -104,8 +113,9 @@ public class Algorithm
 
             // max: g(x) = f(x) - fmin + d
             // min: g(x) = -(f(x) - fmax) + d
-            if (_inputs.functionGoal == FunctionGoal.Max ? fx < fExtreme : fx > fExtreme)
-                fExtreme = fx;
+            // if goal is to max, fExtreme has to be min and if the goal is to min then fExtreme should be max
+            if (_inputs.optimizationGoal == OptimizationGoal.Max ? fx < fExtremeOppositeOfGoal : fx > fExtremeOppositeOfGoal)
+                fExtremeOppositeOfGoal = fx;
 
             xs.Add(xReal);
             fs.Add(fx);
@@ -117,44 +127,33 @@ public class Algorithm
             fs = fs
         };
     }
-
-    public List<string> Select(List<double> xs, double fExtreme)
+    /// <summary>
+    /// Selects new population memebers from 'xs'.
+    /// Requires fExtreme to be set (by running first <see cref="GeneratePopulation">).
+    /// </summary>
+    public List<string> Select(List<double> xs)
     {
-        List<double> gs = new();
-        double gsSum = 0;
+        var gs = xs
+            .Select(x => Utils.G(_inputs.f, x, _inputs.optimizationGoal, fExtremeOppositeOfGoal, _inputs.genotypeSpace.precision.d));
+        double gsSum = gs.Sum();
 
-        for (int i = 0; i < _inputs.N; i++)
+        // calculate CDF (cummulative distribution function)
+        List<double> qs = gs.Aggregate(Enumerable.Empty<double>(), (qs, g) =>
         {
-            double gx = Utils.G(_inputs.f, xs[i], _inputs.functionGoal, fExtreme, _inputs.genotypeSpace.precision.d);
-            gsSum += gx;
-            gs.Add(gx);
-        }
-
-        double q = 0;
-        List<double> ps = new();
-        List<double> qs = new();
-
-        for (int i = 0; i < _inputs.N; i++)
-        {
-            double p = gs[i] / gsSum;
-            q += p;
-            ps.Add(p);
-            qs.Add(q);
-        }
-
-        List<double> rs = new();
-        List<double> xReals = new();
+            double p = g / gsSum;
+            double q = qs.LastOrDefault(0) + p;
+            return qs.Append(q);
+        }).ToList();
+       
+        // selection
         List<string> xBins = new();
-
-        for (int i = 0; i < _inputs.N; i++)
+        for (int _i = 0; _i < _inputs.N; _i++)
         {
             double r = _rand.NextDouble();
-            int xCrossIndex = Utils.GetCDFIndex(r, qs);
-            double xPreCrossReal = xs[xCrossIndex];
-            string xPreCrossBin = Utils.Real2Bin(xPreCrossReal, _inputs.genotypeSpace);
-            rs.Add(r);
-            xReals.Add(xPreCrossReal);
-            xBins.Add(xPreCrossBin);
+            int xIndex = Utils.GetCDFIndex(r, qs);
+            double xReal = xs[xIndex];
+            string xBin = Utils.Real2Bin(xReal, _inputs.genotypeSpace);
+            xBins.Add(xBin);
         }
 
         return xBins;
@@ -184,7 +183,6 @@ public class Algorithm
         }
 
         // find a match and cross chromosomes
-        List<List<int>?> cuttingPoints = new(_inputs.N);
         List<string?> children = new();
         string? secondChild = null;
         int? cuttingPoint = null;
@@ -215,26 +213,14 @@ public class Algorithm
                     child = R1[..(int)cuttingPoint] + R2[(int)cuttingPoint..];
                     secondChild = R2[..(int)cuttingPoint] + R1[(int)cuttingPoint..];
 
-                    // if current parent is a paramour of R2
-                    if (R2Index < i)
-                    {
-                        // add the current cutting point to it
-                        cuttingPoints[R2Index]!.Add((int)cuttingPoint);
-                    }
-                    else if (R2Index == i)
+                    if (R2Index == i)
                     {
                         // self breeding is not allowed!
                         child = null;
                     }
 
                 }
-                cuttingPoints.Add(new List<int> { (int)cuttingPoint! });
             }
-            else
-            {
-                cuttingPoints.Add(null);
-            }
-
             children.Add(child);
         }
 
@@ -253,7 +239,6 @@ public class Algorithm
     {
         List<double> xs = new(_inputs.N);
         List<double> fs = new(_inputs.N);
-        List<double> rands = new(_inputs.genotypeSpace.precision.l);
 
         for (int i = 0; i < _inputs.N; i++)
         {
@@ -263,7 +248,6 @@ public class Algorithm
             for (int g = 0; g < _inputs.genotypeSpace.precision.l; g++)
             {
                 double r = _rand.NextDouble();
-                rands.Add(r);
                 if (r <= _inputs.pm)
                 {
                     genes[g] = genes[g] == '0' ? '1' : '0';
