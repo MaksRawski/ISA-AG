@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Running;
 using Core;
@@ -11,46 +12,36 @@ namespace Benchmarks
     public class Algo
     {
         private readonly Algorithm algo;
-        private readonly double fExtreme;
 
         public readonly Population population;
-        public readonly List<double> popXs;
         public readonly List<string> popXbins;
+        public UserInputs inputs;
 
         public Algo()
         {
-            double a = -4, b = -12;
+            double a = -12, b = -4;
             GenotypeSpace space = GenotypeSpace.FromDecimalPlaces(3, a, b);
 
             License.iConfirmNonCommercialUse("John Doe");
             var f = Utils.ParseFunction("mod(x,1) * (cos(20*pi*x) - sin(x))");
 
-            var inputs = new UserInputs
-            {
-                genotypeSpace = space,
-                elitism = true,
-                pk = 0.75,
-                pm = 0.002,
-                N = 10,
-                T = 50,
-                functionGoal = FunctionGoal.Max,
-                f = f,
-            };
+            inputs = new UserInputs(space, N: 10, T: 20, pk: 0.75, pm: 0.002, elitism: true, f, OptimizationGoal.Max);
 
-            algo = new Algorithm(inputs);
-            
+            int seed = 0;
+            algo = new Algorithm(inputs, seed);
+
             // init some results to use as inputs for later calls
-            population = algo.GeneratePopulation(out fExtreme);
-            popXbins = algo.Select(population.xs, fExtreme);
-            popXbins = algo.Crossover(popXbins);
-            popXs = algo.Mutate(popXbins).xs;
+            population = algo.GeneratePopulation();
+            popXbins = algo.Select(population.xs);
+            //popXbins = algo.Crossover(popXbins);
+            //popXs = algo.Mutate(popXbins).xs;
         }
 
         [Benchmark]
-        public Population GeneratePopulation() => algo.GeneratePopulation(out double _);
+        public Population GeneratePopulation() => algo.GeneratePopulation();
 
         [Benchmark]
-        public List<string> Select() => algo.Select(popXs, fExtreme);
+        public List<string> Select() => algo.Select(population.xs);
 
         [Benchmark]
         public List<string> Crossover() => algo.Crossover(popXbins);
@@ -58,18 +49,12 @@ namespace Benchmarks
         [Benchmark]
         public Population Mutation() => algo.Mutate(popXbins);
 
-        //[Benchmark]
-        //public void RunEz() => algo.Run(userInputsEz, out var rows);
-
-        //[Benchmark]
-        //public void RunExtreme() => algo.Run(userInputsExtreme, out var rows);
+        [Benchmark]
+        public void RunEz() => algo.Run(out var _);
     }
 
     public class Program
     {
-        public static void Main(string[] args)
-        {
-            var summary = BenchmarkRunner.Run(typeof(Program).Assembly);
-        }
+        static void Main(string[] _) => BenchmarkRunner.Run<Algo>();
     }
 }
