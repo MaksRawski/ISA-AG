@@ -9,6 +9,49 @@ public struct Population
 {
     public List<double> xs, fs;
 }
+public readonly struct AlgorithmStats
+{
+    public IReadOnlyList<double> Fmaxs { get; }
+    public IReadOnlyList<double> Faves { get; }
+    public IReadOnlyList<double> Fmins { get; }
+    public readonly int T;
+
+    internal AlgorithmStats(List<double> fmaxs, List<double> faves, List<double> fmins)
+    {
+        if (fmaxs.Count != faves.Count || faves.Count != fmins.Count)
+            throw new ArgumentException($"Mismatch in the number of stats: fmaxs={fmaxs.Count}, faves={faves.Count}, fmins={fmins.Count}");
+
+        Fmaxs = fmaxs;
+        Faves = faves;
+        Fmins = fmins;
+        this.T = fmaxs.Count;
+    }
+}
+internal class StatsFactory
+{
+    public List<double> fmaxs = new(), faves = new(), fmins = new();
+    private readonly int T;
+
+    public StatsFactory(int T)
+    {
+        fmaxs.Capacity = T; faves.Capacity = T; fmins.Capacity = T;
+        this.T = T;
+    }
+
+    public void AddRow(double fmax, double fave, double fmin)
+    {
+        if (fmaxs.Count == T) 
+            throw new Exception("Tried to add more rows to StatsFactory than initially assumed!");
+        fmaxs.Add(fmax);
+        faves.Add(fave);
+        fmins.Add(fmin);
+    }
+    public AlgorithmStats Build()
+    {
+        return new AlgorithmStats(fmaxs, faves, fmins);
+    }
+}
+
 public class Algorithm
 {
     private Random _rand = new();
@@ -33,10 +76,11 @@ public class Algorithm
         _rand = new(seed);
     }
 
-    public void Run(out List<TableRow> rows)
+    public Population Run(out AlgorithmStats stats)
     {
         var functionGoal = _inputs.optimizationGoal;
         var population = GeneratePopulation();
+        StatsFactory statsFactory = new(_inputs.T);
 
         // perform GA for T generations
         for (int i = 0; i < _inputs.T; i++)
@@ -63,9 +107,14 @@ public class Algorithm
                     population.fs[r] = elite.f;
                 }
             }
+            statsFactory.AddRow(population.fs.Max(), population.fs.Average(), population.fs.Min());
         }
+        stats = statsFactory.Build();
 
-        // group final population members
+        return population;
+    }
+    public void GroupPopulationIntoRows(Population population, out List<TableRow> rows)
+    {
         int populationSize = population.xs.Count;
         var groupedRows = population.xs
             .Zip(population.fs, (x, f) => (x, f))
@@ -111,8 +160,8 @@ public class Algorithm
             double fx = _inputs.f(xReal);
             fx = genotypeSpaceRound(fx);
 
-            // max: g(x) = f(x) - fmin + d
-            // min: g(x) = -(f(x) - fmax) + d
+            // max: g(x) = f(x) - fmins + d
+            // min: g(x) = -(f(x) - fmaxs) + d
             // if goal is to max, fExtreme has to be min and if the goal is to min then fExtreme should be max
             if (_inputs.optimizationGoal == OptimizationGoal.Max ? fx < fExtremeOppositeOfGoal : fx > fExtremeOppositeOfGoal)
                 fExtremeOppositeOfGoal = fx;
@@ -185,7 +234,6 @@ public class Algorithm
         // find a match and cross chromosomes
         List<string?> children = new();
         string? secondChild = null;
-        int? cuttingPoint = null;
 
         for (int i = 0; i < _inputs.N; i++)
         {
@@ -209,7 +257,7 @@ public class Algorithm
                     string R2 = xBins[R2Index];
 
                     // cross chromosomes
-                    cuttingPoint = _rand.Next(1, _inputs.genotypeSpace.precision.l);
+                    int cuttingPoint = _rand.Next(1, _inputs.genotypeSpace.precision.l);
                     child = R1[..(int)cuttingPoint] + R2[(int)cuttingPoint..];
                     secondChild = R2[..(int)cuttingPoint] + R1[(int)cuttingPoint..];
 

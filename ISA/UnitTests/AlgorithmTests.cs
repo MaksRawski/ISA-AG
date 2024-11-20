@@ -272,10 +272,10 @@ namespace AlgorithmTests
 
             // run the entire algorithm for 1 generation
             algo = new(inputs, seed);
-            algo.Run(out List<TableRow> rows);
+            pop = algo.Run();
 
-            bool containsElite = rows.Select(row => row.XReal).Contains(elite);
-            Assert.IsTrue(containsElite, $"Rows returned by Run didn't contain elite!");
+            bool containsElite = pop.xs.Contains(elite);
+            Assert.IsTrue(containsElite, $"Population after Run didn't contain elite!");
         }
     }
 }

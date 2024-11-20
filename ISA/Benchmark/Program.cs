@@ -33,8 +33,6 @@ namespace Benchmarks
             // init some results to use as inputs for later calls
             population = algo.GeneratePopulation();
             popXbins = algo.Select(population.xs);
-            //popXbins = algo.Crossover(popXbins);
-            //popXs = algo.Mutate(popXbins).xs;
         }
 
         [Benchmark]
@@ -50,7 +48,7 @@ namespace Benchmarks
         public Population Mutation() => algo.Mutate(popXbins);
 
         [Benchmark]
-        public void RunEz() => algo.Run(out var _);
+        public Population RunEz() => algo.Run(out _);
     }
 
     public class Program
