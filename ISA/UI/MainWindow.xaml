@@ -1,6 +1,7 @@
 ﻿<Window x:Class="UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" SizeToContent="WidthAndHeight">
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" SizeToContent="WidthAndHeight"
+        xmlns:ScottPlot="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
     <Grid>
         <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Grid.ColumnSpan="2">
             <StackPanel x:Name="inputs" Orientation="Horizontal">
@@ -27,16 +28,17 @@
                 <Button x:Name="startButton" Content="START" Click="StartButton_Click" Margin="0,0,5,0"/>
             </StackPanel>
 
-            <TabControl>
+            <TabControl SelectionChanged="TabControl_SelectionChanged">
                 <TabItem Header="Dane">
                     <DataGrid x:Name="DaneDataGrid" 
-                              AutoGenerateColumns="False"
-                              ScrollViewer.CanContentScroll="True"
-                              VerticalScrollBarVisibility="Auto"
-                              HorizontalScrollBarVisibility="Auto"
-                              CanUserAddRows="False"
-                              IsReadOnly="True"
-                              Margin="10">
+                      Grid.Row="0"
+                      AutoGenerateColumns="False"
+                      ScrollViewer.CanContentScroll="True"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Auto"
+                      CanUserAddRows="False"
+                      IsReadOnly="True"
+                      Margin="10">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Lp" Binding="{Binding Lp}"></DataGridTextColumn>
                             <DataGridTextColumn Header="xReal" Binding="{Binding XReal}"></DataGridTextColumn>
@@ -47,6 +49,7 @@
                     </DataGrid>
                 </TabItem>
                 <TabItem Header="Wykres">
+                    <ScottPlot:WpfPlot x:Name="WpfPlot1" Height="400" Width="1040" />
                 </TabItem>
                 <TabItem Header="Testy">
                 </TabItem>

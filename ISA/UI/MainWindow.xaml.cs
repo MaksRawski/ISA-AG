@@ -2,6 +2,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using Core;
+using ScottPlot;
+using ScottPlot.Plottables;
 
 namespace UI
 {
@@ -80,12 +82,64 @@ namespace UI
                 functionGoal
             );
             var algo = new Algorithm(inputs);
-            algo.Run(out List<TableRow> rows);
-            DaneDataGrid.ItemsSource = rows;
+            var population = algo.Run(out var stats);
+            CreateScatterPlot(stats);
+            algo.GroupPopulationIntoRows(population, out var rows);
 
+            DaneDataGrid.ItemsSource = rows;
             double rowHeight = 22;
             DaneDataGrid.MaxHeight = rowHeight * 20;
+        }
+        private void CreateScatterPlot(AlgorithmStats stats)
+        {
+            WpfPlot1.Plot.Clear();
+            var axesLimits = new AxisLimits(0, stats.T + 1, stats.Fmins.Min() - 0.2, stats.Fmaxs.Max() + 0.2);
+            WpfPlot1.Plot.Axes.SetLimitsX(axesLimits);
+            WpfPlot1.Plot.Axes.SetLimitsY(axesLimits);
+            double[] xAxis = Enumerable.Range(1, stats.T).Select(i => (double)i).ToArray();
 
+            var plmax = WpfPlot1.Plot.Add.Scatter(xAxis, stats.Fmaxs.ToArray()); plmax.LegendText = "f max";
+            var plave = WpfPlot1.Plot.Add.Scatter(xAxis, stats.Faves.ToArray()); plave.LegendText = "f ave";
+            var plmin = WpfPlot1.Plot.Add.Scatter(xAxis, stats.Fmins.ToArray()); plmin.LegendText = "f min";
+
+            WpfPlot1.Plot.XLabel("T");
+            WpfPlot1.Plot.YLabel("f(x)");
+            WpfPlot1.Plot.ShowLegend();
+
+            var highlightText = WpfPlot1.Plot.Add.Text("", 0, 0);
+            highlightText.LabelAlignment = Alignment.LowerLeft;
+            highlightText.LabelBold = true;
+            highlightText.OffsetX = 7;
+            highlightText.OffsetY = -7;
+
+            WpfPlot1.MouseMove += (s, e) =>
+            {
+                var mousePosition = e.GetPosition(WpfPlot1);
+                Pixel mousePixel = new(mousePosition.X, mousePosition.Y);
+                Coordinates mouseLocation = WpfPlot1.Plot.GetCoordinates(mousePixel);
+                DataPoint nearestPoint = plmax.Data.GetNearest(mouseLocation, WpfPlot1.Plot.LastRender);
+
+                int nearestIndex = nearestPoint.Index;
+
+                if (nearestPoint.IsReal)
+                {
+                    highlightText.IsVisible = true;
+                    highlightText.Location = nearestPoint.Coordinates;
+                    highlightText.LabelText = $"f max: {stats.Fmaxs[nearestIndex]:0.##}\n" +
+                    $"f ave: {stats.Faves[nearestIndex]:0.##}\n" +
+                    $"f min: {stats.Fmins[nearestIndex]:0.##}";
+                    WpfPlot1.Refresh();
+                }
+            };
+
+            WpfPlot1.Refresh();
+        }
+        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (WpfPlot1.IsVisible)
+            {
+                WpfPlot1.Refresh();
+            }
         }
     }
 }
