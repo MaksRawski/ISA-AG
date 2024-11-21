@@ -272,7 +272,7 @@ namespace AlgorithmTests
 
             // run the entire algorithm for 1 generation
             algo = new(inputs, seed);
-            pop = algo.Run();
+            pop = algo.Run(out _);
 
             bool containsElite = pop.xs.Contains(elite);
             Assert.IsTrue(containsElite, $"Population after Run didn't contain elite!");
