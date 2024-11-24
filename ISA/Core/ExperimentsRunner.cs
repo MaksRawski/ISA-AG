@@ -13,7 +13,7 @@ namespace Core
 {
     public static class Experiment
     {
-        readonly static int repetitions = 10;
+        readonly static int repetitions = 100;
 
         /// <returns>Average of the best results f(x) from each generation.</returns>
         public static double Run(in UserInputs inputs)
@@ -27,7 +27,7 @@ namespace Core
                 var best = finalPopulation.fs.Max();
                 bestResults.Add(best);
             }
-            var average = bestResults.Average();
+            var average = Math.Round(bestResults.Average(), inputs.genotypeSpace.precision.decimalPlaces);
 
             return average;
         }
@@ -109,7 +109,6 @@ namespace Core
                     semaphore.Wait();
 
                     var fx = Experiment.Run(UserInputFromParameterSet(parameterSet));
-                    Console.WriteLine("parammmmssss");
                     worker.ReportProgress(0, (parameterSet, fx));
 
                     semaphore.Release();
@@ -119,7 +118,6 @@ namespace Core
             worker.ProgressChanged += (sender, e) =>
             {
                 var result = ((ExperimentParameterSet, double))e.UserState!;
-                Console.WriteLine("ProgressChanged!");
                 progress.Report(result);
             };
 

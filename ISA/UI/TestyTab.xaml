@@ -13,6 +13,11 @@
                 <TextBlock Text="{Binding CompletedExperiments}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
                 <TextBlock Text="/" VerticalAlignment="Center"/>
                 <TextBlock Text="{Binding TotalExperiments}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                <TextBlock Text=" (" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding ElapsedTime}" VerticalAlignment="Center"/>
+                <TextBlock Text="/" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding RemainingTime}" VerticalAlignment="Center"/>
+                <TextBlock Text=")" VerticalAlignment="Center"/>
             </StackPanel>
             <DataGrid x:Name="ExperimentResultsDataGrid" 
                       Grid.Row="0"

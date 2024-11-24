@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Core;
 using System.IO;
+using System.Collections.ObjectModel;
 
 namespace UI
 {
@@ -13,35 +13,22 @@ namespace UI
     {
         private double progressPercentage;
         private readonly ExperimentsRunner experimentsRunner;
+        private readonly Stopwatch stopwatch = new();
+
         private class TableRow
         {
-            public int Lp;
-            public string ParameterSet;
-            public double Fave;
+            public int Lp { get; set; }
+            public string ParametersSet { get; set; }
+            public double Fave { get; set; }
 
             public TableRow(int lp, string parameterSet, double fave)
             {
                 Lp = lp;
-                ParameterSet = parameterSet;
+                ParametersSet = parameterSet;
                 Fave = fave;
             }
         }
-        private class TableRowsFactory
-        {
-            private int Lp = 1;
-            private readonly List<TableRow> Rows = new();
-
-            public void AddRow(ExperimentParameterSet parameterSet, double fAve)
-            {
-                string parameters = $"{parameterSet.N},{parameterSet.pk},{parameterSet.pm},{parameterSet.T}";
-                var row = new TableRow(Lp++, parameters, fAve);
-                Rows.Add(row);
-            }
-
-            public List<TableRow> Build() {
-                return Rows;
-            }
-        }
+        private ObservableCollection<TableRow> TableRows { get; } = new();
         public double ProgressPercentage
         {
             get => progressPercentage;
@@ -65,6 +52,18 @@ namespace UI
             get => totalExperiments;
             set { totalExperiments = value; OnPropertyChanged(); }
         }
+        private string elapsedTime;
+        public string ElapsedTime
+        {
+            get => elapsedTime;
+            set { elapsedTime = value; OnPropertyChanged(); }
+        }
+        private string remainingTime;
+        public string RemainingTime
+        {
+            get => remainingTime;
+            set { remainingTime = value; OnPropertyChanged(); }
+        }
 
         public TestyTab()
         {
@@ -79,14 +78,34 @@ namespace UI
 
             experimentsRunner = new ExperimentsRunner(Ns, pks, pms, Ts);
             totalExperiments = experimentsRunner.totalCombinations;
+            CompletedExperiments = 0;
+            remainingTime = "";
+            elapsedTime = "";
         }
 
         private void Start(object sender, RoutedEventArgs e)
         {
             TestyStartButton.IsEnabled = false;
-
             CompletedExperiments = 0;
-            TableRowsFactory tableRowsFactory = new();
+            ProgressPercentage = 0;
+            TableRows.Clear();
+            stopwatch.Restart();
+
+            ExperimentResultsDataGrid.ItemsSource = TableRows;
+            ExperimentResultsDataGrid.MaxHeight = 22 * 20;
+
+            TableRows.CollectionChanged += (s, e) =>
+            {
+                ExperimentResultsDataGrid.Items.SortDescriptions.Clear();
+
+                ExperimentResultsDataGrid.Items.SortDescriptions.Add(
+                    new SortDescription("Fave", ListSortDirection.Descending));
+
+                ExperimentResultsDataGrid.Items.SortDescriptions.Add(
+                    new SortDescription("ParameterSet", ListSortDirection.Ascending));
+
+                ExperimentResultsDataGrid.Items.Refresh();
+            };
 
             Progress<(ExperimentParameterSet, double)> progress = new (result =>
             {
@@ -94,14 +113,24 @@ namespace UI
 
                 CompletedExperiments++;
                 ProgressPercentage = (double)CompletedExperiments / TotalExperiments * 100;
-                Console.WriteLine("progressssss");
 
-                tableRowsFactory.AddRow(parameterSet, fx);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    string parameters = $"{parameterSet.N},{parameterSet.pk},{parameterSet.pm},{parameterSet.T}";
+                    TableRows.Add(new TableRow(CompletedExperiments, parameters, fx));
+                });
+                if (CompletedExperiments > 0)
+                {
+                    double averageTimePerExperiment = stopwatch.Elapsed.TotalSeconds / CompletedExperiments;
+                    double remainingSeconds = averageTimePerExperiment * (TotalExperiments - CompletedExperiments);
+                    TimeSpan remainingTime = TimeSpan.FromSeconds(remainingSeconds);
+                    ElapsedTime = $"{stopwatch.Elapsed:hh\\:mm\\:ss}";
+                    RemainingTime = $"{remainingTime:hh\\:mm\\:ss}";
+                }
             });
 
             experimentsRunner.Run(progress, onComplete: () =>
             {
-                ExperimentResultsDataGrid.ItemsSource = tableRowsFactory.Build();
                 TestyStartButton.IsEnabled = true;
             });
         }
