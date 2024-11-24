@@ -104,34 +104,34 @@ namespace UI
             var plmin = WpfPlot1.Plot.Add.Scatter(xAxis, stats.Fmins.ToArray()); plmin.LegendText = "f min";
 
             WpfPlot1.Plot.XLabel("T");
-            WpfPlot1.Plot.YLabel("f(x)");
+            WpfPlot1.Plot.YLabel("f");
             WpfPlot1.Plot.ShowLegend();
 
-            var highlightText = WpfPlot1.Plot.Add.Text("", 0, 0);
-            highlightText.LabelAlignment = Alignment.LowerLeft;
-            highlightText.LabelBold = true;
-            highlightText.OffsetX = 7;
-            highlightText.OffsetY = -7;
+            //var highlightText = WpfPlot1.Plot.Add.Text("", 0, 0);
+            //highlightText.LabelAlignment = Alignment.UpperLeft;
+            //highlightText.OffsetX = 7;
+            //highlightText.OffsetY = 10;
+            //highlightText.LabelBold = true;
 
-            WpfPlot1.MouseMove += (s, e) =>
-            {
-                var mousePosition = e.GetPosition(WpfPlot1);
-                Pixel mousePixel = new(mousePosition.X, mousePosition.Y);
-                Coordinates mouseLocation = WpfPlot1.Plot.GetCoordinates(mousePixel);
-                DataPoint nearestPoint = plmax.Data.GetNearest(mouseLocation, WpfPlot1.Plot.LastRender);
+            //WpfPlot1.MouseMove += (s, e) =>
+            //{
+            //    var mousePosition = e.GetPosition(WpfPlot1);
+            //    Pixel mousePixel = new(mousePosition.X, mousePosition.Y);
+            //    Coordinates mouseLocation = WpfPlot1.Plot.GetCoordinates(mousePixel);
+            //    DataPoint nearestPoint = plmax.Data.GetNearest(mouseLocation, WpfPlot1.Plot.LastRender);
 
-                int nearestIndex = nearestPoint.Index;
+            //    int nearestIndex = nearestPoint.Index;
 
-                if (nearestPoint.IsReal)
-                {
-                    highlightText.IsVisible = true;
-                    highlightText.Location = nearestPoint.Coordinates;
-                    highlightText.LabelText = $"f max: {stats.Fmaxs[nearestIndex]:0.##}\n" +
-                    $"f ave: {stats.Faves[nearestIndex]:0.##}\n" +
-                    $"f min: {stats.Fmins[nearestIndex]:0.##}";
-                    WpfPlot1.Refresh();
-                }
-            };
+            //    if (nearestPoint.IsReal)
+            //    {
+            //        highlightText.IsVisible = true;
+            //        highlightText.Location = nearestPoint.Coordinates;
+            //        highlightText.LabelText = $"f max: {stats.Fmaxs[nearestIndex]:0.##}\n" +
+            //        $"f ave: {stats.Faves[nearestIndex]:0.##}\n" +
+            //        $"f min: {stats.Fmins[nearestIndex]:0.##}";
+            //        WpfPlot1.Refresh();
+            //    }
+            //};
 
             WpfPlot1.Refresh();
         }
