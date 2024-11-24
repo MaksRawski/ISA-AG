@@ -16,7 +16,8 @@ class Program
         Console.WriteLine("Starting...");
         var experimentsRunner = new ExperimentsRunner(Ns, pks, pms, Ts);
 
-        string logFilePath = "experiments_log.csv";
+        string date = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+        string logFilePath = $"experiments_log_{date}.csv";
         using StreamWriter writer = new(logFilePath, append: true);
         writer.WriteLine("N,T,pk,pm,fx");
         writer.AutoFlush = true;
@@ -27,5 +28,7 @@ class Program
             string logEntry = $"{parameterSet.N},{parameterSet.T},{parameterSet.pk},{parameterSet.pm},{fx}";
             writer.WriteLine(logEntry);
         }));
+        Console.Beep();
+        Console.WriteLine("Done!");
     }
 }
