@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using Core;
 using System.IO;
-using OpenTK.Audio.OpenAL.Extensions.Creative.EFX;
 
 namespace UI
 {
@@ -14,7 +13,35 @@ namespace UI
     {
         private double progressPercentage;
         private readonly ExperimentsRunner experimentsRunner;
-        private readonly string logFilePath = "TestyLogs.txt"; 
+        private class TableRow
+        {
+            public int Lp;
+            public string ParameterSet;
+            public double Fave;
+
+            public TableRow(int lp, string parameterSet, double fave)
+            {
+                Lp = lp;
+                ParameterSet = parameterSet;
+                Fave = fave;
+            }
+        }
+        private class TableRowsFactory
+        {
+            private int Lp = 1;
+            private readonly List<TableRow> Rows = new();
+
+            public void AddRow(ExperimentParameterSet parameterSet, double fAve)
+            {
+                string parameters = $"{parameterSet.N},{parameterSet.pk},{parameterSet.pm},{parameterSet.T}";
+                var row = new TableRow(Lp++, parameters, fAve);
+                Rows.Add(row);
+            }
+
+            public List<TableRow> Build() {
+                return Rows;
+            }
+        }
         public double ProgressPercentage
         {
             get => progressPercentage;
@@ -51,25 +78,31 @@ namespace UI
             List<int> Ts = new() { 50, 60, 70, 80, 90, 100 };
 
             experimentsRunner = new ExperimentsRunner(Ns, pks, pms, Ts);
+            totalExperiments = experimentsRunner.totalCombinations;
         }
 
         private async void Start(object sender, RoutedEventArgs e)
         {
             TestyStartButton.IsEnabled = false;
-            using StreamWriter writer = new(logFilePath, append: true);
-            writer.WriteLine("N,T,pk,pm,fx");
+
+            CompletedExperiments = 0; // Reset the counter
+            TableRowsFactory tableRowsFactory = new();
 
             var progress = new Progress<(ExperimentParameterSet, double)>(result =>
             {
                 var (parameterSet, fx) = result;
+
                 CompletedExperiments++;
                 ProgressPercentage = (double)CompletedExperiments / TotalExperiments * 100;
 
-                string logEntry = $"{parameterSet.N},{parameterSet.T},{parameterSet.pk},{parameterSet.pm},{fx}";
-                writer.WriteLine(logEntry);
+                Debug.WriteLine($"Progress report: {ProgressPercentage:F2}%");
+                tableRowsFactory.AddRow(parameterSet, fx);
             });
 
+            // Await the Run method
             await experimentsRunner.Run(progress);
+
+            ExperimentResultsDataGrid.ItemsSource = tableRowsFactory.Build();
             TestyStartButton.IsEnabled = true;
         }
 
