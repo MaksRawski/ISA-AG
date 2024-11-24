@@ -9,24 +9,24 @@ using org.mariuszgromada.math.mxparser;
 
 namespace Core
 {
-    public class Experiment
+    public static class Experiment
     {
-        readonly static int repetitions = 100;
+        readonly static int repetitions = 1;
 
         /// <returns>Average of the best results f(x) from each generation.</returns>
-        public static double Run(UserInputs inputs)
+        public static double Run(in UserInputs inputs)
         {
             Console.WriteLine($"Running experiment with N={inputs.N}, T={inputs.T}, pk={inputs.pk}, pm={inputs.pm}");
+            var bestResults = new List<double>();
 
-            var average = Enumerable.Range(1, repetitions)
-                .Aggregate(Enumerable.Empty<double>(), (bestResults, _i) =>
-                {
-                    var algo = new Algorithm(inputs);
-                    var finalPopulation = algo.Run(out _);
-                    return bestResults.Append(finalPopulation.fs.Max());
-                })
-                .Average();
-            Console.WriteLine($"f(x) = {average} for N={inputs.N}, T={inputs.T}, pk={inputs.pk}, pm={inputs.pm}");
+            for (int i = 1; i <= repetitions; i++)
+            {
+                var algo = new Algorithm(inputs);
+                var finalPopulation = algo.Run(out _);
+                var best = finalPopulation.fs.Max();
+                bestResults.Add(best);
+            }
+            var average = bestResults.Average();
 
             return average;
         }
@@ -45,7 +45,7 @@ namespace Core
     }
     public class ExperimentsRunner
     {
-        readonly int totalCombinations;
+        public readonly int totalCombinations;
 
         private readonly UserInputs defaultInput;
         private readonly List<int> N, T;
@@ -64,9 +64,9 @@ namespace Core
             this.pm = pms;
             this.T = Ts;
         }
-        public IEnumerable<ExperimentParameterSet> GetAllParameterSets()
+        public IEnumerable<ExperimentParameterSet> GetAllParameterSets(int skip = 0)
         {
-            for (int combination = 0; combination < totalCombinations; combination++)
+            for (int combination = skip; combination < totalCombinations; combination++)
             {
                 int nIndex = combination % N.Count;
                 int pkIndex = (combination / N.Count) % pk.Count;
