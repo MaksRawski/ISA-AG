@@ -54,26 +54,26 @@ internal class StatsFactory
 
 public class Algorithm
 {
-    private Random _rand = new();
+    private ThreadLocal<Random> _rand = new();
     private readonly UserInputs _inputs;
     public double fExtremeOppositeOfGoal { get; set; }
 
     public Algorithm(UserInputs userInputs)
     {
         _inputs = userInputs;
-        _rand = new Random();
+        _rand = new ThreadLocal<Random>(() => new Random());
         fExtremeOppositeOfGoal = _inputs.optimizationGoal == OptimizationGoal.Max ? double.MaxValue : double.MinValue;
     }
     public Algorithm(UserInputs userInputs, int seed)
     {
         _inputs = userInputs;
-        _rand = new Random(seed);
+        _rand = new ThreadLocal<Random>(() => new Random(seed));
         fExtremeOppositeOfGoal = _inputs.optimizationGoal == OptimizationGoal.Max ? double.MaxValue : double.MinValue;
     }
 
     public void SetSeed(int seed)
     {
-        _rand = new(seed);
+        _rand = new ThreadLocal<Random>(() => new Random(seed));
     }
 
     public Population Run(out AlgorithmStats stats)
@@ -100,7 +100,7 @@ public class Algorithm
             if (_inputs.elitism && !population.xs.Contains(elite.x))
             {
                 // insert the elite in a random place unless there is a better one at exactly that place
-                int r = _rand.Next(0, _inputs.N);
+                int r = _rand.Value!.Next(0, _inputs.N);
                 if (population.fs[r] <= elite.f)
                 {
                     population.xs[r] = elite.x;
@@ -155,7 +155,7 @@ public class Algorithm
 
         for (int i = 0; i < _inputs.N; i++)
         {
-            double xReal = _inputs.genotypeSpace.a + (_inputs.genotypeSpace.b - _inputs.genotypeSpace.a) * _rand.NextDouble();
+            double xReal = _inputs.genotypeSpace.a + (_inputs.genotypeSpace.b - _inputs.genotypeSpace.a) * _rand.Value!.NextDouble();
             xReal = genotypeSpaceRound(xReal);
             double fx = _inputs.f(xReal);
             fx = genotypeSpaceRound(fx);
@@ -198,7 +198,7 @@ public class Algorithm
         List<string> xBins = new();
         for (int _i = 0; _i < _inputs.N; _i++)
         {
-            double r = _rand.NextDouble();
+            double r = _rand.Value!.NextDouble();
             int xIndex = Utils.GetCDFIndex(r, qs);
             double xReal = xs[xIndex];
             string xBin = Utils.Real2Bin(xReal, _inputs.genotypeSpace);
@@ -216,7 +216,7 @@ public class Algorithm
 
         for (int i = 0; i < _inputs.N; i++)
         {
-            bool parent = _rand.NextDouble() <= _inputs.pk;
+            bool parent = _rand.Value!.NextDouble() <= _inputs.pk;
             parents.Add(parent);
             if (parent) numOfParents++;
         }
@@ -257,7 +257,7 @@ public class Algorithm
                     string R2 = xBins[R2Index];
 
                     // cross chromosomes
-                    int cuttingPoint = _rand.Next(1, _inputs.genotypeSpace.precision.l);
+                    int cuttingPoint = _rand.Value!.Next(1, _inputs.genotypeSpace.precision.l);
                     child = R1[..(int)cuttingPoint] + R2[(int)cuttingPoint..];
                     secondChild = R2[..(int)cuttingPoint] + R1[(int)cuttingPoint..];
 
@@ -295,7 +295,7 @@ public class Algorithm
 
             for (int g = 0; g < _inputs.genotypeSpace.precision.l; g++)
             {
-                double r = _rand.NextDouble();
+                double r = _rand.Value!.NextDouble();
                 if (r <= _inputs.pm)
                 {
                     genes[g] = genes[g] == '0' ? '1' : '0';
