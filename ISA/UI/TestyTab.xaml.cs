@@ -81,29 +81,29 @@ namespace UI
             totalExperiments = experimentsRunner.totalCombinations;
         }
 
-        private async void Start(object sender, RoutedEventArgs e)
+        private void Start(object sender, RoutedEventArgs e)
         {
             TestyStartButton.IsEnabled = false;
 
-            CompletedExperiments = 0; // Reset the counter
+            CompletedExperiments = 0;
             TableRowsFactory tableRowsFactory = new();
 
-            var progress = new Progress<(ExperimentParameterSet, double)>(result =>
+            Progress<(ExperimentParameterSet, double)> progress = new (result =>
             {
                 var (parameterSet, fx) = result;
 
                 CompletedExperiments++;
                 ProgressPercentage = (double)CompletedExperiments / TotalExperiments * 100;
+                Console.WriteLine("progressssss");
 
-                Debug.WriteLine($"Progress report: {ProgressPercentage:F2}%");
                 tableRowsFactory.AddRow(parameterSet, fx);
             });
 
-            // Await the Run method
-            await experimentsRunner.Run(progress);
-
-            ExperimentResultsDataGrid.ItemsSource = tableRowsFactory.Build();
-            TestyStartButton.IsEnabled = true;
+            experimentsRunner.Run(progress, onComplete: () =>
+            {
+                ExperimentResultsDataGrid.ItemsSource = tableRowsFactory.Build();
+                TestyStartButton.IsEnabled = true;
+            });
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
