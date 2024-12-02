@@ -11,11 +11,10 @@ namespace Benchmarks
     //[RPlotExporter]
     public class Algo
     {
-        private readonly Algorithm algo;
+        private readonly Algorithm algo, bestAlgo;
 
         public readonly Population population;
         public readonly List<string> popXbins;
-        public UserInputs inputs;
 
         public Algo()
         {
@@ -25,10 +24,12 @@ namespace Benchmarks
             License.iConfirmNonCommercialUse("John Doe");
             var f = Utils.ParseFunction("mod(x,1) * (cos(20*pi*x) - sin(x))");
 
-            inputs = new UserInputs(space, N: 10, T: 20, pk: 0.75, pm: 0.002, elitism: true, f, OptimizationGoal.Max);
+            var inputs = new UserInputs(space, N: 10, T: 20, pk: 0.75, pm: 0.002, elitism: true, f, OptimizationGoal.Max);
+            var bestInputs = new UserInputs(space, N: 75, T: 90, pk: 0.9, pm: 0.01, elitism: true, f, OptimizationGoal.Max);
 
             int seed = 0;
             algo = new Algorithm(inputs, seed);
+            bestAlgo = new Algorithm(inputs, seed);
 
             // init some results to use as inputs for later calls
             population = algo.GeneratePopulation();
@@ -49,6 +50,9 @@ namespace Benchmarks
 
         [Benchmark]
         public Population RunEz() => algo.Run(out _);
+
+        [Benchmark]
+        public Population RunBest() => bestAlgo.Run(out _);
     }
 
     public class Program
