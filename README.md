@@ -1,4 +1,4 @@
-## Lab2
+## Lab3
 
 ![Lab3 dane screenshot](images/Lab3_1.png)
 ![Lab3 wykres screenshot](images/Lab3_2.png)
